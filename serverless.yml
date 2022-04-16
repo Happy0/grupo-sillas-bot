@@ -1,0 +1,19 @@
+service: grupo-sillas-bot
+
+provider:
+  name: aws
+  runtime: rust
+plugins:
+  - serverless-rust
+package:
+  individually: true
+
+custom:
+  rust:
+    dockerless: true
+
+functions:
+  test:
+    handler: grupo-sillas-bot
+    events:
+      - httpApi: 'GET /testaroonie'
