@@ -19,7 +19,7 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
             "statusCode": 200,
             "body": json!({
                 "type": 1
-            })
+            }).to_string()
         })
     )
 }
