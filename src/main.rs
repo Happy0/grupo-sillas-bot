@@ -17,9 +17,9 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
     Ok(json!(
         { 
             "statusCode": 200,
-            "body": {
+            "body": json!({
                 "type": 1
-            }
+            })
         })
     )
 }
