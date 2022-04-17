@@ -16,4 +16,4 @@ functions:
   test:
     handler: grupo-sillas-bot
     events:
-      - httpApi: 'GET /testaroonie'
+      - httpApi: 'POST /interaction'
