@@ -9,13 +9,17 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
+
     let (event, _context) = event.into_parts();
-    let first_name = event["queryStringParameters"]["firstName"].as_str().unwrap_or("world");
+
+    println!("{}",event.to_string());
 
     Ok(json!(
         { 
             "statusCode": 200,
-            "body": format!("Hello, {}!", first_name) 
+            "body": {
+                "type": 1
+            }
         })
     )
 }
