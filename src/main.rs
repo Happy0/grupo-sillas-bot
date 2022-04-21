@@ -27,6 +27,7 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
             })
         )
     } else {
+        println!("Not authorized :o");
         return Ok(json!(
             { 
                 "statusCode": 401,
@@ -48,7 +49,7 @@ fn verify_request(event: Value) -> bool {
     let timestamp = &headers["x-signature-timestamp"].as_str();
     let body = &event["body"].as_str();
 
-    // TODO: improve nesting using flat_map
+    // TODO: improve nesting using flat_map if I can be bothered
     match (public_key, signature, timestamp, body) {
         (Ok(pub_key), Some(sig), Some(ts), Some(body)) => {
             let public_key_bytes = hex::decode(pub_key);
