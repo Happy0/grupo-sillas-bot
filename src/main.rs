@@ -15,22 +15,32 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
 
     let (event, _context) = event.into_parts();
 
-    println!("{}",event.to_string());
+    let authorized_request = verify_request(event);
 
-    Ok(json!(
-        { 
-            "statusCode": 200,
-            "body": json!({
-                "type": 1
-            }).to_string()
-        })
-    )
+    if authorized_request {
+        return Ok(json!(
+            { 
+                "statusCode": 200,
+                "body": json!({
+                    "type": 1
+                }).to_string()
+            })
+        )
+    } else {
+        return Ok(json!(
+            { 
+                "statusCode": 401,
+                "body": "invalid request signature"
+            })
+        )
+    }
+
 }
 
 /**
  * Verifies authorization via nacl
  */
-async fn verify_request(event: Value) -> bool {
+fn verify_request(event: Value) -> bool {
     let headers = &event["multiValueHeaders"];
 
     let public_key = env::var("PUBLIC_KEY");
@@ -58,13 +68,14 @@ async fn verify_request(event: Value) -> bool {
                             return result.is_ok();
                         }
                         (_,_) => {
-                            false;
+                            println!("Failed to construct pub key or sig from bytes");
+                            return false;
                         }
-                    }
+                    };
 
-                    return false
                 }
                 _ => {
+                    println!("Failed to parse pub_key or sig_bytes from hex to bytes");
                     return false
                 }
             } 
