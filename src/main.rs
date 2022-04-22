@@ -15,6 +15,8 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
 
     let (event, _context) = event.into_parts();
 
+    println!("{}",event.to_string());
+
     let authorized_request = verify_request(event);
 
     if authorized_request {
@@ -44,9 +46,11 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
 fn verify_request(event: Value) -> bool {
     let headers = &event["multiValueHeaders"];
 
-    let public_key = env::var("PUBLIC_KEY");
-    let signature = &headers["x-signature-ed25519"].as_str();
-    let timestamp = &headers["x-signature-timestamp"].as_str();
+    let public_key = env::var("DISCORD_BOT_PUBLIC_KEY");
+    let pub_key_undefined = public_key.is_err();
+
+    let signature = &headers["x-signature-ed25519"].as_array().and_then(|arr| arr.get(0).and_then(|x | x.as_str()));
+    let timestamp = &headers["x-signature-timestamp"].as_array().and_then(|arr| arr.get(0).and_then(|x| x.as_str()));
     let body = &event["body"].as_str();
 
     // TODO: improve nesting using flat_map if I can be bothered
@@ -82,7 +86,8 @@ fn verify_request(event: Value) -> bool {
             } 
         },
         _ => {
-            println!("Unexpected missing header / value which verifying request signature.");
+            println!("Unexpected missing header / value while verifying request signature.");
+            println!("public_key: {}, signature: {}, timestamp: {}, body: {}", pub_key_undefined, signature.is_none(), timestamp.is_none(), body.is_none());
             false
         }
     }
