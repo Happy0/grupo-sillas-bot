@@ -6,7 +6,7 @@ use hex;
 /**
  * Verifies authorization via nacl
  */
-pub fn verify_request(event: Value) -> bool {
+pub fn verify_request(event: &Value) -> bool {
     let headers = &event["multiValueHeaders"];
 
     let public_key = env::var("DISCORD_BOT_PUBLIC_KEY");
