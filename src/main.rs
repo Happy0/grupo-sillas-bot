@@ -52,7 +52,7 @@ fn handle_request(event_body: &str) -> Value {
             let interaction_type = body["type"].as_i64();
             let req_type = body["data"]["type"].as_i64();
 
-            if (interaction_type == Some(1)) {
+            if interaction_type == Some(1) {
                 let ping_response: Value = json!(
                     { 
                         "statusCode": 200,
@@ -65,20 +65,23 @@ fn handle_request(event_body: &str) -> Value {
             }
 
             println!("Trying to respond");
-            return json!(
+            let x = json!(
                 { 
                     "statusCode": 200,
-                    "body": {
+                    "headers": {
+                        "Content-Type": "application/json"
+                    },
+                    "body": json!({
                         "type": 4,
                         "data": {
                             "tts": false,
-                            "content": "Congrats on sending your command!",
-                            "embeds": [],
-                            "allowed_mentions": { "parse": [] }
+                            "content": "Congrats on sending your command!"
                         }
-                    }
+                    }).to_string()
                 });
 
+            println!("{}", x.to_string());
+            return x;
         }
         Err(_) => {
             println!("Not a JSON payload");
