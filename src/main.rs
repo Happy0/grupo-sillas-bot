@@ -68,7 +68,7 @@ fn handle_request(event_body: &str) -> Value {
             return json!(
                 { 
                     "statusCode": 200,
-                    "body": json!({
+                    "body": {
                         "type": 4,
                         "data": {
                             "tts": false,
@@ -76,7 +76,7 @@ fn handle_request(event_body: &str) -> Value {
                             "embeds": [],
                             "allowed_mentions": { "parse": [] }
                         }
-                    }).to_string()
+                    }
                 });
 
         }
