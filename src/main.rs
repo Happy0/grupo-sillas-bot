@@ -3,6 +3,8 @@ use serde_json::{json, Value};
 
 mod auth;
 
+mod lol;
+
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let func = service_fn(func);
@@ -11,7 +13,7 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
-
+    lol::get_game_ids;
     let (event, _context) = event.into_parts();
 
     println!("{}",event.to_string());
