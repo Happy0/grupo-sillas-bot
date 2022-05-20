@@ -37,7 +37,15 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
     }
 }
 
-fn process_request(event_body: &str) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
+async fn process_request(event: LambdaEvent<Value>) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
+    let (event, _context) = event.into_parts();
+    auth::verify_request(&event).then(|| true).ok_or(discord_bot_types::BotError{http_status: 401, description: "invalid request signature".to_string()})?;
+
+
+
+
+
+
     panic!("ahh...")
 }
 
