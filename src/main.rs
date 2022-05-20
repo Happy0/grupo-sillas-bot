@@ -37,6 +37,10 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
     }
 }
 
+fn process_request(event_body: &str) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
+    panic!("ahh...")
+}
+
 fn handle_request(event_body: &str) -> Value {
     println!("body: {}", event_body);
     let payload: Result<Value, _> = serde_json::from_str(event_body);
