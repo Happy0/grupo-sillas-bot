@@ -12,8 +12,23 @@ pub struct Headers {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct Data {
+    tts: bool,
+    content: String
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Body {
+    #[serde(rename(serialize = "type", deserialize = "type"))]
+    typeField: u64,
+    data: Option<Data>
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct BotResponse {
-    pub headers: Headers
+    pub headers: Headers,
+    pub statusCode: u64,
+    body: Body
 }
 
 #[derive(Serialize, Deserialize)]
