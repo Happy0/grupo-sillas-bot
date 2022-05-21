@@ -64,10 +64,10 @@ fn make_validation_error_response(error: String) -> discord_bot_types::BotError 
 }
 
 fn make_error_response(error_code: u64, description: &str) -> discord_bot_types::BotError {
-    json!({
-        "statusCode": error_code,
-        "body": description
-    })
+    return discord_bot_types::BotError{
+        statusCode: error_code,
+        body: description.to_string()
+    };
 }
 
 fn make_ping_response() -> discord_bot_types::BotResponse {

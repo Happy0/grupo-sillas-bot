@@ -14,22 +14,22 @@ pub struct Headers {
 
 #[derive(Serialize, Deserialize)]
 pub struct Data {
-    tts: bool,
-    content: String
+    pub tts: bool,
+    pub content: String
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Body {
     #[serde(rename(serialize = "type", deserialize = "type"))]
-    typeField: u64,
-    data: Option<Data>
+    pub typeField: u64,
+    pub data: Option<Data>
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct BotResponse {
     pub headers: Headers,
     pub statusCode: u64,
-    body: Body
+    pub body: Body
 }
 
 #[derive(Serialize, Deserialize)]
