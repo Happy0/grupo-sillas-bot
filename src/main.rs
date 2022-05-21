@@ -39,7 +39,19 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
 
 async fn process_request(event: LambdaEvent<Value>) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
     let (event, _context) = event.into_parts();
-    auth::verify_request(&event).then(|| true).ok_or(discord_bot_types::BotError{http_status: 401, description: "invalid request signature".to_string()})?;
+    auth::verify_request(&event).then(|| true).ok_or(discord_bot_types::BotError{statusCode: 401, body: "invalid request signature".to_string()})?;
+
+    let event_body = event["body"].as_str();
+    let payload = event_body.ok_or(make_validation_error_response("Missing body".to_string()))?;
+    let payload: Value = serde_json::from_str(payload).map_err(|x| make_validation_error_response("Payload is not JSON object".to_string()))?;
+    let interaction_type = payload["type"].as_i64().ok_or(make_validation_error_response("Missing type field".to_string()))?;
+
+    match interaction_type {
+        1 => {return Ok(make_ping_response())},
+        2 => {panic!("")},
+        _ => {panic!("")}
+    };
+
 
 
 
@@ -115,11 +127,18 @@ fn handle_request(event_body: &str) -> Value {
         
     }
 }
-    
+
 fn create_response(command_data: Value) -> Result<String, serde_json::Error> {
-    let command: discord_types::Command = serde_json::from_value(command_data)?;
+    let command: discord_bot_types::Command = serde_json::from_value(command_data)?;
 
     panic!("oh noes");
+}
+
+fn make_validation_error_response(error: String) -> discord_bot_types::BotError {
+    return discord_bot_types::BotError {
+        statusCode: 400,
+        body: error
+    } 
 }
 
 fn make_error_response(error_code: u64, description: &str) -> serde_json::Value {
@@ -129,3 +148,15 @@ fn make_error_response(error_code: u64, description: &str) -> serde_json::Value 
     })
 }
 
+fn make_ping_response() -> discord_bot_types::BotResponse {
+    return discord_bot_types::BotResponse {
+        headers: discord_bot_types::Headers {
+            contentType: "application/json".to_string()
+        },
+        statusCode: 200,
+        body: discord_bot_types::Body {
+            typeField: 1,
+            data: None
+        }
+    }
+}
