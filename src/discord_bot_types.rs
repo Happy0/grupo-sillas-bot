@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct BotError {
     pub statusCode: u64,
     pub body: String
