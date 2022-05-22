@@ -15,6 +15,9 @@ async fn main() -> Result<(), Error> {
 async fn func(event: LambdaEvent<Value>) -> Result<Result<discord_bot_types::BotResponse, discord_bot_types::BotError>, Error> {
     let result = process_request(event).await;
 
+    println!("Responding with...");
+    println!("{}", serde_json::to_string(&result)?);
+
     return Ok(result);
 }
 
