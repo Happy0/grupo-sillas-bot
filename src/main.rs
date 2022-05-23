@@ -15,13 +15,17 @@ async fn main() -> Result<(), Error> {
 async fn func(event: LambdaEvent<Value>) -> Result<Value, serde_json::Error> {
     let result = process_request(event).await;
 
-    let lambda_result = result.map(|x| discord_bot_types::LambdaBotResponse {
-        headers: x.headers,
-        statusCode: x.statusCode,
-        body: serde_json::to_string(&x.body).unwrap()
-    });
+    let body_with_json_string = result
+        .map(|x| serde_json::to_string(&x.body)
+            .map(|y| discord_bot_types::LambdaBotResponse {
+                headers: x.headers,
+                statusCode: x.statusCode,
+                body: serde_json::to_string(&x.body).unwrap()
+        }))
+        .map(|x| x.map_err(|y| discord_bot_types::BotError {statusCode: 500, body: "Error marshalling to JSON".to_string()}))
+        .and_then(|x| x);
 
-    let send = match lambda_result {
+    let send = match body_with_json_string {
         Err(bot_error) => serde_json::to_value(&bot_error),
         Ok(success) => serde_json::to_value(&success)
     };
