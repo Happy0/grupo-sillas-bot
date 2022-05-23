@@ -12,13 +12,24 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-async fn func(event: LambdaEvent<Value>) -> Result<Result<discord_bot_types::BotResponse, discord_bot_types::BotError>, Error> {
+async fn func(event: LambdaEvent<Value>) -> Result<Value, serde_json::Error> {
     let result = process_request(event).await;
 
-    println!("Responding with...");
-    println!("{}", serde_json::to_string(&result)?);
+    let lambda_result = result.map(|x| discord_bot_types::LambdaBotResponse {
+        headers: x.headers,
+        statusCode: x.statusCode,
+        body: serde_json::to_string(&x.body).unwrap()
+    });
 
-    return Ok(result);
+    let send = match lambda_result {
+        Err(bot_error) => serde_json::to_value(&bot_error),
+        Ok(success) => serde_json::to_value(&success)
+    };
+
+    println!("Responding with...");
+    println!("{:?}", send);
+
+    return send;
 }
 
 async fn process_request(event: LambdaEvent<Value>) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {

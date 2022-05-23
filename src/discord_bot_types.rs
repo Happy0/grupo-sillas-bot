@@ -6,7 +6,7 @@ pub struct BotError {
     pub body: String
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Headers {
     #[serde(rename(serialize = "Content-Type", deserialize = "Content-Type"))]
     pub contentType: String
@@ -22,6 +22,7 @@ pub struct Data {
 pub struct Body {
     #[serde(rename(serialize = "type", deserialize = "type"))]
     pub typeField: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<Data>
 }
 
@@ -30,6 +31,13 @@ pub struct BotResponse {
     pub headers: Headers,
     pub statusCode: u64,
     pub body: Body
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LambdaBotResponse {
+    pub headers: Headers,
+    pub statusCode: u64,
+    pub body: String
 }
 
 #[derive(Serialize, Deserialize)]
