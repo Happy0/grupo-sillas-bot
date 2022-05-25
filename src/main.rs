@@ -66,9 +66,9 @@ async fn process_request(event: LambdaEvent<Value>) -> Result<discord_bot_types:
 
 async fn create_command_response(command_data: discord_bot_types::Command ) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
 
-    let bot_response = match command_data.name.as_str() {
+    let bot_response: String = match command_data.name.as_str() {
         "played" => {
-            "aahh, i dunno yet."
+            "aahh, i dunno yet.".to_string()
         },
         x => {format!("Unrecognise command: {}", x)}
     };
@@ -82,7 +82,7 @@ async fn create_command_response(command_data: discord_bot_types::Command ) -> R
                 typeField: 4,
                 data: Some(discord_bot_types::Data {
                     tts: false,
-                    content: bot_response.to_string()
+                    content: bot_response
                 })
             }
     });
