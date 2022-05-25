@@ -51,16 +51,16 @@ pub struct DiscordReceivedCommand {
 pub struct StringCommandOption {
     #[serde(rename(serialize = "type", deserialize = "type"))]
     typeField: u64,
-    name: String,
-    value: String 
+    pub name: String,
+    pub value: String 
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct NumberCommandOption {
     #[serde(rename(serialize = "type", deserialize = "type"))]
     typeField: u64,
-    name: String,
-    value: u64 
+    pub name: String,
+    pub value: u64 
 }
 
 #[derive(Serialize, Deserialize)]
@@ -75,4 +75,9 @@ pub struct Command {
     pub id: String,
     pub name: String,
     pub options: Vec<CommandOption>
+}
+
+pub struct PlayedCommand {
+    pub player_name: String,
+    pub days: u64
 }

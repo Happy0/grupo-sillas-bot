@@ -4,6 +4,7 @@ use serde_json::{json, Value};
 mod auth;
 mod discord_bot_types;
 mod lol;
+mod lol_command;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
