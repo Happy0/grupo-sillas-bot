@@ -72,7 +72,7 @@ pub enum CommandOption {
 
 #[derive(Serialize, Deserialize)]
 pub struct Command {
-    id: String,
-    name: String,
-    options: Vec<CommandOption>
+    pub id: String,
+    pub name: String,
+    pub options: Vec<CommandOption>
 }

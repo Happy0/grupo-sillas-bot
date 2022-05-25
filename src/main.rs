@@ -19,10 +19,10 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, serde_json::Error> {
     // and return it with the response headers and HTTP status code
     let body_with_json_string = result
         .map(|x| serde_json::to_string(&x.body)
-            .map(|y| discord_bot_types::LambdaBotResponse {
+            .map(|body_as_json_string| discord_bot_types::LambdaBotResponse {
                 headers: x.headers,
                 statusCode: x.statusCode,
-                body: y
+                body: body_as_json_string
         }))
         .map(|x| x.map_err(|y| discord_bot_types::BotError {statusCode: 500, body: "Error marshalling to JSON".to_string()}))
         .and_then(|x| x);
@@ -55,7 +55,7 @@ async fn process_request(event: LambdaEvent<Value>) -> Result<discord_bot_types:
         1 => {return Ok(make_ping_response())},
         2 => {
             let command = payload_value.data.ok_or(make_validation_error_response("Command missing 'data' field.".to_string()))?;
-            return create_command_response(command);
+            return create_command_response(command).await;
         },
         _ => {
             return Err(make_error_response(400, "Unrecognised command type")); 
@@ -64,7 +64,15 @@ async fn process_request(event: LambdaEvent<Value>) -> Result<discord_bot_types:
 
 }
 
-fn create_command_response(command_data: discord_bot_types::Command ) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
+async fn create_command_response(command_data: discord_bot_types::Command ) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
+
+    let bot_response = match command_data.name.as_str() {
+        "played" => {
+            "aahh, i dunno yet."
+        },
+        x => {format!("Unrecognise command: {}", x)}
+    };
+
     return Ok(discord_bot_types::BotResponse {
             headers: discord_bot_types::Headers {
                 contentType: "application/json".to_string()
@@ -74,7 +82,7 @@ fn create_command_response(command_data: discord_bot_types::Command ) -> Result<
                 typeField: 4,
                 data: Some(discord_bot_types::Data {
                     tts: false,
-                    content: "Congrats on ur command".to_string()
+                    content: bot_response.to_string()
                 })
             }
     });
