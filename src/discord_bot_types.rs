@@ -41,17 +41,33 @@ pub struct LambdaBotResponse {
 }
 
 #[derive(Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum CommandPrimitiveType {
-    Integer(u64),
-    String,
-    Boolean
+pub struct DiscordReceivedCommand {
+    #[serde(rename(serialize = "type", deserialize = "type"))]
+    pub typeField: u64,
+    pub data: Option<Command>
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct CommandOption {
+pub struct StringCommandOption {
+    #[serde(rename(serialize = "type", deserialize = "type"))]
+    typeField: u64,
     name: String,
-    value: CommandPrimitiveType 
+    value: String 
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct NumberCommandOption {
+    #[serde(rename(serialize = "type", deserialize = "type"))]
+    typeField: u64,
+    name: String,
+    value: u64 
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CommandOption {
+    NumberCommandOption(NumberCommandOption),
+    StringCommandOption(StringCommandOption)
 }
 
 #[derive(Serialize, Deserialize)]
