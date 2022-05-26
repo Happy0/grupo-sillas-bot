@@ -68,9 +68,13 @@ async fn process_request(event: LambdaEvent<Value>) -> Result<discord_bot_types:
 async fn create_command_response(command_data: discord_bot_types::Command ) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
 
     let bot_response: String = match command_data.name.as_str() {
-        "played" => 
-            lol_command::execute_played_command(command_data).await
-        ,
+        "played" => {
+            let result = lol_command::execute_played_command(command_data).await;
+
+            // TODO: Make response message based on error code or success string
+
+            "I am a work in progress.".to_string()
+        },
         x => {format!("Unrecognise command: {}", x)}
     };
 
