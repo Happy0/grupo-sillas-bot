@@ -2,7 +2,7 @@ use crate::discord_bot_types;
 use crate::lol;
 use std::env;
 
-const api_fetcher: lol::api_fetcher::BoundedHttpFetcher = lol::api_fetcher::create_lol_client(2,3);
+const api_fetcher: lol::api_fetcher::BoundedHttpFetcher = lol::api_fetcher::create_lol_client(20,100);
 
 pub async fn execute_played_command(played_command: discord_bot_types::Command) -> Result<String, discord_bot_types::BotError> {
     println!("Executing played command");
