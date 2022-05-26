@@ -1,13 +1,20 @@
 use crate::discord_bot_types;
 use crate::lol;
+use std::env;
 
-pub async fn execute_played_command(played_command: discord_bot_types::Command) -> String {
-    let x = build_played_command(played_command.options);
+const api_fetcher: lol::api_fetcher::BoundedHttpFetcher = lol::api_fetcher::create_lol_client(2,3);
 
-    match x {
-        Err(x) => "Internal error: could not parse command".to_string(),
-        Ok(x) => "I'd be about to execute the lol command...".to_string()
-    }
+pub async fn execute_played_command(played_command: discord_bot_types::Command) -> Result<String, discord_bot_types::BotError> {
+    println!("Executing played command");
+    let x = build_played_command(played_command.options)?;
+
+    let api_key = env::var("LOL_API_KEY").map_err(|err| discord_bot_types::BotError {
+        statusCode: 500,
+        body: "Missing LOL API key".to_string()
+    })?;
+
+
+    return Ok("".to_string());
 }
 
 fn build_played_command(command_options: Vec<discord_bot_types::CommandOption>) -> Result<discord_bot_types::PlayedCommand, discord_bot_types::BotError> {

@@ -17,5 +17,6 @@ functions:
     handler: grupo-sillas-bot
     environment:
       DISCORD_BOT_PUBLIC_KEY: ${env:DISCORD_PUBLIC_KEY}
+      LOL_API_KEY: ${env:LOL_API_KEY}
     events:
       - httpApi: 'POST /interaction'

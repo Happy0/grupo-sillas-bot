@@ -5,8 +5,8 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use futures::future::join_all;
 use std::env;
 
-mod api_fetcher;
-mod models;
+pub mod api_fetcher;
+pub mod models;
 
 /**
  * Returns the list of IDs of the games the given player (by puuid) has played in over the given period of days

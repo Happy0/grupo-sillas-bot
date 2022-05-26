@@ -25,7 +25,7 @@ pub struct BoundedHttpFetcher {
     per_minute_limit: u64
 }
 
-pub async fn create_lol_client(per_second_limit: u64, per_minute_limit: u64) -> BoundedHttpFetcher {
+pub fn create_lol_client(per_second_limit: u64, per_minute_limit: u64) -> BoundedHttpFetcher {
     let (tx, rx): (Sender<SendCommand>, Receiver<SendCommand>) = mpsc::channel(32);
 
     let fetcher = BoundedHttpFetcher {

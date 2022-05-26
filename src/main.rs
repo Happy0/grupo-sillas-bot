@@ -68,9 +68,9 @@ async fn process_request(event: LambdaEvent<Value>) -> Result<discord_bot_types:
 async fn create_command_response(command_data: discord_bot_types::Command ) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
 
     let bot_response: String = match command_data.name.as_str() {
-        "played" => {
-            "aahh, i dunno yet.".to_string()
-        },
+        "played" => 
+            lol_command::execute_played_command(command_data).await
+        ,
         x => {format!("Unrecognise command: {}", x)}
     };
 
