@@ -7,13 +7,15 @@ pub async fn execute_played_command(lol_api_fetcher: &lol::api_fetcher::BoundedH
     println!("Executing played command");
     let command = build_played_command(played_command.options)?;
 
+    let days = if command.days > 7 {7} else { command.days };
+
     let api_key = env::var("LOL_API_KEY").map_err(|err| discord_bot_types::BotError {
         statusCode: 500,
         body: "Missing LOL API key".to_string()
     })?;
 
     let puuid = lol::get_puuid(&lol_api_fetcher, "euw1", &command.player_name, &api_key).await?;
-    let game_ids = lol::get_game_ids(&lol_api_fetcher, &api_key, "europe", &puuid, command.days).await?;
+    let game_ids = lol::get_game_ids(&lol_api_fetcher, &api_key, "europe", &puuid, days).await?;
     let models = lol::fetch_game_summaries(&lol_api_fetcher, &api_key, "europe", &puuid, game_ids).await?;
 
     let played_for: u64 = calculate_time_played(&models);
