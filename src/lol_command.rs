@@ -23,7 +23,7 @@ pub async fn execute_played_command(lol_api_fetcher: &lol::api_fetcher::BoundedH
 
     // TODO: Add in-game scores and link to more detailed view of game
     return Ok(format!("{} has played for {} over {} days\n
-    They have won {} games and lost {}
+    They won {} games and lost {}
     ", command.player_name, time_played_string, command.days, wins, loses));
 }
 
