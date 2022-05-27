@@ -21,10 +21,17 @@ pub async fn execute_played_command(lol_api_fetcher: &lol::api_fetcher::BoundedH
     let wins = calculate_wins(&models);
     let loses = calculate_loses(&models);
 
-    // TODO: Add in-game scores and link to more detailed view of game
-    return Ok(format!("{} has played for {} over {} days\n
-    They won {} games and lost {}
-    ", command.player_name, time_played_string, command.days, wins, loses));
+    let game_summary_strings = models.iter().map(|x| create_game_stats_string(x));
+
+    let mut message= format!("{} has played for {} over {} days\nThey won {} games and lost {}
+    ", command.player_name, time_played_string, command.days, wins, loses).to_string();
+
+    for summary in game_summary_strings {
+        message.push_str(&summary);
+        message.push_str("\n");
+    }
+
+    return Ok(message);
 }
 
 fn calculate_time_played(summaries: &Vec<lol::models::UserGameSummary>) -> u64 {
@@ -40,12 +47,22 @@ fn calculate_loses(summaries: &Vec<lol::models::UserGameSummary>) -> u64 {
 }
 
 fn create_time_played_string(millis: u64) -> String {
+    println!("millis: {}", millis);
     let seconds = millis / 1000;
     let minutes = seconds / 60;
     let hours = minutes / 60;
     
     let minutes = minutes % 60;
     return format!("{} hours and {} minutes", hours, minutes);
+}
+
+fn create_game_stats_string(game_summary: &lol::models::UserGameSummary) -> String {
+    let participant = &game_summary.participant;
+    let full_info_url = format!("https://euw.op.gg/summoners/euw/{}/matches/{}/{}", participant.championName, game_summary.participant.puuid, game_summary.game_id );
+
+    let win_or_loss = if game_summary.participant.win {"Win"} else {"Loss"};
+
+    return format!("[{}] {}/{}/{} ({}) {}", participant.championName, participant.kills, participant.kills, participant.assists, win_or_loss, full_info_url);
 }
 
 fn build_played_command(command_options: Vec<discord_bot_types::CommandOption>) -> Result<discord_bot_types::PlayedCommand, discord_bot_types::BotError> {

@@ -86,7 +86,7 @@ async fn get_game_player_summary(client: &api_fetcher::BoundedHttpFetcher, regio
 
     match user {
         None => return Err(models::LolApiError {description: "Could not find user summary in match".to_string(), http_code: "500".to_string()}),
-        Some(participant) => return Ok(models::UserGameSummary {participant: participant, game_duration_millis: body.info.gameDuration})
+        Some(participant) => return Ok(models::UserGameSummary {game_id: body.info.gameId, match_id: body.metadata.matchId, participant: participant, game_duration_millis: body.info.gameDuration * 1000})
     }
 
 }

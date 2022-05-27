@@ -15,7 +15,7 @@ pub struct GameSummary {
 
 #[derive(Serialize, Deserialize)]
 pub struct Metadata {
-    matchId: String
+    pub matchId: String
 }
 
 #[derive(Serialize, Deserialize)]
@@ -37,6 +37,8 @@ pub struct Participant {
 
 #[derive(Debug)]
 pub struct UserGameSummary {
+    pub game_id: u64,
+    pub match_id: String,
     pub participant: Participant,
     pub game_duration_millis: u64
 }
