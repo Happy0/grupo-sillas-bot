@@ -1,9 +1,37 @@
 use serde::{Deserialize, Serialize};
 
+use crate::lol;
+
+pub struct Toolbox {
+    pub lol_api_fetcher: lol::api_fetcher::BoundedHttpFetcher
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BotError {
     pub statusCode: u64,
     pub body: String
+}
+
+/**
+ * Converts between an error received from the LoL API and
+ * our internal representation of an error
+ */
+impl From<lol::models::LolApiError> for BotError {
+    fn from(error: lol::models::LolApiError) -> Self {
+
+        let error_code: u64 = match error.http_code.as_str() {
+            // Too many requests too quick
+            "429" => 429,
+
+            // Anything else is probably our bug
+            x => 500
+        };
+
+        BotError {
+            statusCode: error_code,
+            body: error.description
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]

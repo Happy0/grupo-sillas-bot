@@ -8,6 +8,22 @@ use std::env;
 pub mod api_fetcher;
 pub mod models;
 
+pub async fn get_puuid(client: &api_fetcher::BoundedHttpFetcher, region: &str, user_name: &str, api_key: &str) -> Result<String, models::LolApiError> {
+    let request_url =  format!("https://{}.api.riotgames.com/lol/summoner/v4/summoners/by-name/{}?api_key={}", region, user_name, api_key);
+
+    let res = api_fetcher::get_request(client, request_url).await?;
+
+    let status_code = res.status();
+    
+    let body = res.json::<HashMap<String, Value>>().await?;
+    let result = body.get("puuid").and_then(Value::as_str);
+
+    return match result {
+         Some(x) => Ok(x.to_string()),
+         None => Err(models::LolApiError {description: format!("Unexpected no 'puuid' in response body. HTTP status code: {}", status_code), http_code: status_code.to_string()})
+    }
+}
+
 /**
  * Returns the list of IDs of the games the given player (by puuid) has played in over the given period of days
  */
@@ -50,7 +66,7 @@ pub async fn get_game_ids(client: &api_fetcher::BoundedHttpFetcher, api_key: &st
     return Ok(game_ids);
 }
 
-async fn fetch_game_summaries(client: &api_fetcher::BoundedHttpFetcher, api_key: &str, region: &str, puuid: &str, game_ids: Vec<String>) -> Result<Vec<models::UserGameSummary>, models::LolApiError> {
+pub async fn fetch_game_summaries(client: &api_fetcher::BoundedHttpFetcher, api_key: &str, region: &str, puuid: &str, game_ids: Vec<String>) -> Result<Vec<models::UserGameSummary>, models::LolApiError> {
     let futures = game_ids.iter().map(|game_id| get_game_player_summary(client, region, game_id, puuid, api_key) );
     let y = join_all(futures).await;
     return y.into_iter().collect::<Result<Vec<_>,_>>();
@@ -95,21 +111,5 @@ fn build_game_ids_request_url(
     let start_time = end_time - Duration::new(days * 86400, 0) ;
 
     return format!("https://{}.api.riotgames.com/lol/match/v5/matches/by-puuid/{}/ids?api_key={}&count={}&start={}&startTime={}&endTime={}", region, puuid, api_key, page_size, start_index, start_time.as_secs(), end_time.as_secs());
-}
-
-async fn get_puuid(client: &api_fetcher::BoundedHttpFetcher, region: &str, user_name: &str, api_key: &str) -> Result<String, models::LolApiError> {
-    let request_url =  format!("https://{}.api.riotgames.com/lol/summoner/v4/summoners/by-name/{}?api_key={}", region, user_name, api_key);
-
-    let res = api_fetcher::get_request(client, request_url).await?;
-
-    let status_code = res.status();
-    
-    let body = res.json::<HashMap<String, Value>>().await?;
-    let result = body.get("puuid").and_then(Value::as_str);
-
-    return match result {
-         Some(x) => Ok(x.to_string()),
-         None => Err(models::LolApiError {description: format!("Unexpected no 'puuid' in response body. HTTP status code: {}", status_code), http_code: status_code.to_string()})
-    }
 }
 

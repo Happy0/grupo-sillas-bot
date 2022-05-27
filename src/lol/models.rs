@@ -45,8 +45,8 @@ impl std::convert::From<reqwest::Error> for LolApiError {
     fn from(error: reqwest::Error) -> Self {
 
         let result = LolApiError {
-            description: error.to_string(),
-            http_code: "Unknown".to_string()
+            http_code: "Unknown".to_string(),
+            description: error.to_string()
         };
 
         return result;

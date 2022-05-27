@@ -8,13 +8,19 @@ mod lol_command;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let func = service_fn(func);
+    let api_fetcher: lol::api_fetcher::BoundedHttpFetcher = lol::api_fetcher::create_lol_client(20,100);
+
+    let toolbox = discord_bot_types::Toolbox {
+        lol_api_fetcher: api_fetcher
+    };
+
+    let func = service_fn(|x| func(&toolbox, x));
     lambda_runtime::run(func).await?;
     Ok(())
 }
 
-async fn func(event: LambdaEvent<Value>) -> Result<Value, serde_json::Error> {
-    let result = process_request(event).await;
+async fn func(toolbox: &discord_bot_types::Toolbox, event: LambdaEvent<Value>) -> Result<Value, serde_json::Error> {
+    let result = process_request(toolbox, event).await;
 
     // AWS Lambda expects the returned 'body' field to be a JSON string, so we convert the bot response to a JSON string
     // and return it with the response headers and HTTP status code
@@ -39,7 +45,7 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, serde_json::Error> {
     return send;
 }
 
-async fn process_request(event: LambdaEvent<Value>) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
+async fn process_request(toolbox: &discord_bot_types::Toolbox, event: LambdaEvent<Value>) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
     let (event, _context) = event.into_parts();
     auth::verify_request(&event).then(|| true).ok_or(discord_bot_types::BotError{statusCode: 401, body: "invalid request signature".to_string()})?;
 
@@ -56,7 +62,7 @@ async fn process_request(event: LambdaEvent<Value>) -> Result<discord_bot_types:
         1 => {return Ok(make_ping_response())},
         2 => {
             let command = payload_value.data.ok_or(make_validation_error_response("Command missing 'data' field.".to_string()))?;
-            return create_command_response(command).await;
+            return create_command_response(toolbox, command).await;
         },
         _ => {
             return Err(make_error_response(400, "Unrecognised command type")); 
@@ -65,11 +71,11 @@ async fn process_request(event: LambdaEvent<Value>) -> Result<discord_bot_types:
 
 }
 
-async fn create_command_response(command_data: discord_bot_types::Command ) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
+async fn create_command_response(toolbox: &discord_bot_types::Toolbox, command_data: discord_bot_types::Command ) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
 
     let bot_response: String = match command_data.name.as_str() {
         "played" => {
-            let result = lol_command::execute_played_command(command_data).await;
+            let result = lol_command::execute_played_command(&toolbox.lol_api_fetcher, command_data).await;
 
             // TODO: Make response message based on error code or success string
 

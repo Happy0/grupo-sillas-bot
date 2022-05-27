@@ -2,11 +2,8 @@ use crate::discord_bot_types;
 use crate::lol;
 use std::env;
 
-pub async fn execute_played_command(played_command: discord_bot_types::Command) -> Result<String, discord_bot_types::BotError> {
+pub async fn execute_played_command(lol_api_fetcher: &lol::api_fetcher::BoundedHttpFetcher, played_command: discord_bot_types::Command) -> Result<String, discord_bot_types::BotError> {
     
-    // TODO: instantiate in main handler and pass this in
-    let api_fetcher: lol::api_fetcher::BoundedHttpFetcher = lol::api_fetcher::create_lol_client(20,100);
-
     println!("Executing played command");
     let x = build_played_command(played_command.options)?;
 
@@ -14,6 +11,11 @@ pub async fn execute_played_command(played_command: discord_bot_types::Command) 
         statusCode: 500,
         body: "Missing LOL API key".to_string()
     })?;
+
+    let puuid = lol::get_puuid(&lol_api_fetcher, "euw1", &x.player_name, &api_key).await?;
+    let game_ids = lol::get_game_ids(&lol_api_fetcher, &api_key, "europe", &puuid, x.days).await?;
+    let models = lol::fetch_game_summaries(&lol_api_fetcher, &api_key, "europe", &puuid, game_ids).await?;
+
 
     return Ok("I don't do anything yet... I will return a wee recent game summary".to_string());
 }
