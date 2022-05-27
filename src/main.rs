@@ -77,9 +77,14 @@ async fn create_command_response(toolbox: &discord_bot_types::Toolbox, command_d
         "played" => {
             let result = lol_command::execute_played_command(&toolbox.lol_api_fetcher, command_data).await;
 
-            // TODO: Make response message based on error code or success string
-
-            "I am a work in progress.".to_string()
+            match result {
+                Ok(message) => message,
+                Err(err) if err.statusCode == 429 => "Too many league of legends requests too quickly. Please wait a minute or two.".to_string(),
+                Err(err) => {
+                    println!("Error from league of legends API: {}", err.body);
+                    "Unexpected error while processing command.".to_string()
+                }
+            }
         },
         x => {format!("Unrecognise command: {}", x)}
     };
