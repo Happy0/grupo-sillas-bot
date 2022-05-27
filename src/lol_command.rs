@@ -58,7 +58,7 @@ fn create_time_played_string(millis: u64) -> String {
 
 fn create_game_stats_string(game_summary: &lol::models::UserGameSummary) -> String {
     let participant = &game_summary.participant;
-    let full_info_url = format!("https://euw.op.gg/summoners/euw/{}/matches/{}/{}", participant.championName, game_summary.participant.puuid, game_summary.game_id );
+    let full_info_url = format!("https://www.leagueofgraphs.com/match/euw/{}#participant1", game_summary.game_id);
 
     let win_or_loss = if game_summary.participant.win {"Win"} else {"Loss"};
 
