@@ -64,7 +64,7 @@ fn create_game_stats_string(game_summary: &lol::models::UserGameSummary) -> Stri
 
     let win_or_loss = if game_summary.participant.win {"Win"} else {"Loss"};
 
-    return format!("[{}] {}/{}/{} ({}) {}", participant.championName, participant.kills, participant.kills, participant.assists, win_or_loss, full_info_url);
+    return format!("[{}] {}/{}/{} ({}) {}", participant.championName, participant.kills, participant.deaths, participant.assists, win_or_loss, full_info_url);
 }
 
 fn build_played_command(command_options: Vec<discord_bot_types::CommandOption>) -> Result<discord_bot_types::PlayedCommand, discord_bot_types::BotError> {
