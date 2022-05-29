@@ -30,7 +30,7 @@ pub async fn execute_played_command(
     let game_summary_strings = models.iter().map(create_game_stats_string);
 
     let mut message= format!("{} has played for {} over {} days\nThey won {} games and lost {}", command.player_name, time_played_string, command.days, wins, loses).to_string();
-
+    message.push_str("\n");
     for summary in game_summary_strings {
         message.push_str(&summary);
         message.push_str("\n");
