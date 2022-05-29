@@ -27,7 +27,7 @@ pub async fn get_puuid(client: &api_fetcher::BoundedHttpFetcher, region: &str, u
 /**
  * Returns the list of IDs of the games the given player (by puuid) has played in over the given period of days
  */
-pub async fn get_game_ids(client: &api_fetcher::BoundedHttpFetcher, api_key: &str, region: &str, puuid: &str, days: u64, game_type: Option<String>) -> Result<Vec<String>, models::LolApiError> {
+pub async fn get_game_ids(client: &api_fetcher::BoundedHttpFetcher, api_key: &str, region: &str, puuid: &str, days: u64, game_type: &Option<String>) -> Result<Vec<String>, models::LolApiError> {
 
     let mut game_ids: std::vec::Vec<String> = Vec::new();
     let mut start_index: usize = 0;
@@ -100,7 +100,7 @@ fn build_game_ids_request_url(
     api_key: &str,
     puuid: &str,
     days: u64,
-    game_type: Option<String>,
+    game_type: &Option<String>,
     start_index: usize,
     page_size: usize) -> String {
     
@@ -112,7 +112,7 @@ fn build_game_ids_request_url(
     let start_time = end_time - Duration::new(days * 86400, 0) ;
 
     let req_url = format!("https://{}.api.riotgames.com/lol/match/v5/matches/by-puuid/{}/ids?api_key={}&count={}&start={}&startTime={}&endTime={}", region, puuid, api_key, page_size, start_index, start_time.as_secs(), end_time.as_secs());
-    let full_url = game_type.map(|x| format!("{}&type={}", req_url, x)).unwrap_or(req_url);
+    let full_url = game_type.as_ref().map(|x| format!("{}&type={}", req_url, x)).unwrap_or(req_url);
 
     return full_url;
 }

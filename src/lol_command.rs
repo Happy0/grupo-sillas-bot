@@ -19,7 +19,7 @@ pub async fn execute_played_command(
     })?;
 
     let puuid = lol::get_puuid(&lol_api_fetcher, "euw1", &command.player_name, &api_key).await?;
-    let game_ids = lol::get_game_ids(&lol_api_fetcher, &api_key, "europe", &puuid, days, game_type).await?;
+    let game_ids = lol::get_game_ids(&lol_api_fetcher, &api_key, "europe", &puuid, days, &game_type).await?;
     let models = lol::fetch_game_summaries(&lol_api_fetcher, &api_key, "europe", &puuid, game_ids).await?;
 
     let played_for: u64 = calculate_time_played(&models);
