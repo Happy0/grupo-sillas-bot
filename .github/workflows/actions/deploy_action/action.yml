@@ -2,11 +2,24 @@ name: 'Deploy Serverless App'
 description: 'Deploys the serverless app stack'
 
 runs:
+  inputs:
+    discord-pub-key:
+      description: 'The discord bot app public key'
+      required: true
+    lol-api-key:
+      description: 'The League of Legends API app API key.'
+      required: true
+    aws-secret:
+      description: The AWS secret to deploy the stack with
+      required: true
+    aws-secret-key:
+      description: The AWS secret key
+      required: true
   using: 'docker'
   env:
-    DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY }}
-    LOL_API_KEY: ${{ secrets.LOL_API_KEY }}
-    AWS_SECRET: ${{ secrets.AWS_SECRET }}
-    AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+    DISCORD_PUBLIC_KEY: ${{ inputs.discord-pub-key  }}
+    LOL_API_KEY: ${{ inputs.lol-api-key }}
+    AWS_SECRET: ${{ inputs.aws-secret }}
+    AWS_SECRET_KEY: ${{ inputs.aws-secret-key }}
 
   image: 'Dockerfile'
