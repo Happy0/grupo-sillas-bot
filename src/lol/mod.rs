@@ -20,7 +20,10 @@ pub async fn get_puuid(client: &api_fetcher::BoundedHttpFetcher, region: &str, u
 
     return match result {
          Some(x) => Ok(x.to_string()),
-         None => Err(models::LolApiError {description: format!("Unexpected no 'puuid' in response body. HTTP status code: {}", status_code), http_code: status_code.to_string()})
+         None => Err(models::LolApiError {
+             description: format!("Unexpected no 'puuid' in response body. HTTP status code: {}", status_code),
+             http_code: status_code.to_string().chars().take_while(|&ch| ch != ' ').collect::<String>()
+        })
     }
 }
 
