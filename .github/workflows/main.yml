@@ -1,0 +1,15 @@
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy_serverless_stack_job:
+    runs-on: ubuntu-latest
+    name: Deploys the bot serverless stack
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Deploy step
+        id: deploy_stop
+        uses: actions/deploy_action
