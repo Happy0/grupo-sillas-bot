@@ -9,6 +9,6 @@ RUN rustup target add x86_64-unknown-linux-musl
 
 RUN apt-get install -y npm
 RUN npm install -g serverless
-
+RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/deploy_script.sh"]
 
