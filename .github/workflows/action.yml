@@ -1,0 +1,12 @@
+name: 'Deploy Serverless App'
+description: 'Deploys the serverless app stack'
+
+runs:
+  using: 'docker'
+  env:
+    DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY }}
+    LOL_API_KEY: ${{ secrets.LOL_API_KEY }}
+    AWS_SECRET: ${{ secrets.AWS_SECRET }}
+    AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+
+  image: 'Dockerfile'
