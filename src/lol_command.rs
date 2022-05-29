@@ -2,7 +2,11 @@ use crate::discord_bot_types;
 use crate::lol;
 use std::env;
 
-pub async fn execute_played_command(lol_api_fetcher: &lol::api_fetcher::BoundedHttpFetcher, played_command: discord_bot_types::Command) -> Result<String, discord_bot_types::BotError> {
+pub async fn execute_played_command(
+    lol_api_fetcher: &lol::api_fetcher::BoundedHttpFetcher,
+    played_command: discord_bot_types::Command,
+    game_type: Option<String>,
+    ) -> Result<String, discord_bot_types::BotError> {
     
     println!("Executing played command");
     let command = build_played_command(played_command.options)?;
@@ -15,7 +19,7 @@ pub async fn execute_played_command(lol_api_fetcher: &lol::api_fetcher::BoundedH
     })?;
 
     let puuid = lol::get_puuid(&lol_api_fetcher, "euw1", &command.player_name, &api_key).await?;
-    let game_ids = lol::get_game_ids(&lol_api_fetcher, &api_key, "europe", &puuid, days).await?;
+    let game_ids = lol::get_game_ids(&lol_api_fetcher, &api_key, "europe", &puuid, days, game_type).await?;
     let models = lol::fetch_game_summaries(&lol_api_fetcher, &api_key, "europe", &puuid, game_ids).await?;
 
     let played_for: u64 = calculate_time_played(&models);
@@ -23,10 +27,9 @@ pub async fn execute_played_command(lol_api_fetcher: &lol::api_fetcher::BoundedH
     let wins = calculate_wins(&models);
     let loses = calculate_loses(&models);
 
-    let game_summary_strings = models.iter().map(|x| create_game_stats_string(x));
+    let game_summary_strings = models.iter().map(create_game_stats_string);
 
-    let mut message= format!("{} has played for {} over {} days\nThey won {} games and lost {}
-    ", command.player_name, time_played_string, command.days, wins, loses).to_string();
+    let mut message= format!("{} has played for {} over {} days\nThey won {} games and lost {}", command.player_name, time_played_string, command.days, wins, loses).to_string();
 
     for summary in game_summary_strings {
         message.push_str(&summary);
@@ -64,7 +67,7 @@ fn create_game_stats_string(game_summary: &lol::models::UserGameSummary) -> Stri
 
     let win_or_loss = if game_summary.participant.win {"Win"} else {"Loss"};
 
-    return format!("[{}] {}/{}/{} ({}) {}", participant.championName, participant.kills, participant.deaths, participant.assists, win_or_loss, full_info_url);
+    return format!("[{}] {}/{}/{} ({}) <{}>", participant.championName, participant.kills, participant.deaths, participant.assists, win_or_loss, full_info_url);
 }
 
 fn build_played_command(command_options: Vec<discord_bot_types::CommandOption>) -> Result<discord_bot_types::PlayedCommand, discord_bot_types::BotError> {

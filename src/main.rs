@@ -73,13 +73,18 @@ async fn process_request(toolbox: &discord_bot_types::Toolbox, event: LambdaEven
 
 async fn create_command_response(toolbox: &discord_bot_types::Toolbox, command_data: discord_bot_types::Command ) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
 
-    let bot_response: String = match command_data.name.as_str() {
-        "played" => {
-            let result = lol_command::execute_played_command(&toolbox.lol_api_fetcher, command_data).await;
+    let command_name = command_data.name.as_str();
+
+    let bot_response: String = match command_name {
+        "played" | "ranked" => {
+            let game_type = if command_name == "played" {Some("ranked".to_string())} else {None};
+
+            let result = lol_command::execute_played_command(&toolbox.lol_api_fetcher, command_data, game_type).await;
 
             match result {
                 Ok(message) => message,
                 Err(err) if err.statusCode == 429 => "Too many league of legends requests too quickly. Please wait a minute or two.".to_string(),
+                Err(err) if err.statusCode == 404 => "User not found.".to_string(),
                 Err(err) => {
                     println!("Error from league of legends API: {}", err.body);
                     "Unexpected error while processing command.".to_string()

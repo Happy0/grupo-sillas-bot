@@ -4,7 +4,23 @@ const {Routes} = require('discord-api-types/v9');
 const commands = [
   {
     name: 'played',
-    description: 'Work out how much time someone has spent playing League of Legends recently.',
+    description: `Get a summary of a player's recent games.`,
+    type: 1,
+    options: [{
+        "name": "user",
+        "description": "The league of legends username for the user.",
+        "required": true,
+        "type": 3
+    },{
+        "name": "days",
+        "description": "Over the last how many days.",
+        "required": true,
+        "type": 4
+    }]
+  },
+  {
+    name: 'ranked',
+    description: `Get a summary of a player's recent ranked games.`,
     type: 1,
     options: [{
         "name": "user",

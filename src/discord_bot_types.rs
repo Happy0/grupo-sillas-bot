@@ -22,6 +22,7 @@ impl From<lol::models::LolApiError> for BotError {
         let error_code: u64 = match error.http_code.as_str() {
             // Too many requests too quick
             "429" => 429,
+            "404" => 404,
 
             // Anything else is probably our bug
             x => 500
