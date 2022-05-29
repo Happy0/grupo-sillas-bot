@@ -13,3 +13,8 @@ jobs:
       - name: Deploy step
         id: deploy_stop
         uses: ./.github/workflows/actions/deploy_action
+        with:
+          discord-pub-key: ${{ secrets.DISCORD_PUB_KEY }}
+          lol-api-key: ${{ secrets.LOL_API_KEY }}
+          aws-secret: ${{ secrets.AWS_SECRET }}
+          aws-secret-key: ${{ secrets.AWS_SECRET_KEY }}

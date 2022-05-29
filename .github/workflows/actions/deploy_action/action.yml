@@ -19,7 +19,7 @@ runs:
   env:
     DISCORD_PUBLIC_KEY: ${{ inputs.discord-pub-key  }}
     LOL_API_KEY: ${{ inputs.lol-api-key }}
-    AWS_SECRET: ${{ inputs.aws-secret }}
-    AWS_SECRET_KEY: ${{ inputs.aws-secret-key }}
+    AWS_ACCESS_KEY_ID: ${{ inputs.aws-secret }}
+    AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-key }}
 
   image: 'Dockerfile'
