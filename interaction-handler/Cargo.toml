@@ -15,4 +15,3 @@ hex = "0.4.3"
 futures = "0.3.21"
 reqwest = { version = "0.11.10", features = ["json", "rustls-tls"] }
 lol = { path = "../lol" }
-#openssl = { version = "0.10", features = ["vendored"] }
