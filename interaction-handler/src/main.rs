@@ -1,9 +1,9 @@
 use lambda_runtime::{service_fn, LambdaEvent, Error};
 use serde_json::{json, Value};
+use lol;
 
 mod auth;
 mod discord_bot_types;
-mod lol;
 mod lol_command;
 
 #[tokio::main]

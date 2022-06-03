@@ -1,6 +1,6 @@
 // TODO: helper function for doing fetches in rate limit friendly way
 // Returns a future, internally processes sequentially...
-use crate::lol::models;
+use crate::models;
 
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Sender, Receiver};
@@ -85,10 +85,9 @@ pub async fn handle_requests(mut receiver: Receiver<SendCommand>, per_second_lim
                 .await;
 
             if (!result.is_ok()) {
-                println!("Ahh not")
+                println!("Ahh not okie")
             }
         });
-
 
         //let x = sender.send(result);
 
