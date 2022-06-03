@@ -73,6 +73,7 @@ pub struct LambdaBotResponse {
 pub struct DiscordReceivedCommand {
     #[serde(rename(serialize = "type", deserialize = "type"))]
     pub typeField: u64,
+    pub token: String,
     pub data: Option<Command>
 }
 
