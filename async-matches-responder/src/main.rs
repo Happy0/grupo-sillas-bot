@@ -3,7 +3,6 @@ use serde_json::{json, Value};
 use lol;
 use common;
 mod models;
-
 mod lol_command;
 
 #[tokio::main]
@@ -55,8 +54,18 @@ async fn handle_played_command(
         body: "Could not write type to JSON string".to_string()
     })?;
 
+    let mut headers = reqwest::header::HeaderMap::new();
+    let value = reqwest::header::HeaderValue::from_static("application/json");
+    let x = headers.insert("Content-Type", value);
+
+
     let request_url = format!("https://discord.com/api/webhooks/{}/{}/messages/@original", command.application_id, command.token);
-    let send_result = discord_http_client.patch(request_url).body(body).send().await;
+    let send_result = discord_http_client
+        .patch(request_url)
+        .headers(headers)
+        .body(body)
+        .send()
+        .await;
 
     println!("Discord send result: {:?}", send_result);
 
