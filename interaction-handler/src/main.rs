@@ -4,6 +4,7 @@ use serde_json::{Value, json};
 use aws_sdk_sqs::Client;
 use aws_config::meta::region::RegionProviderChain;
 use std::env;
+use chrono;
 
 mod auth;
 mod lol_command;
@@ -95,11 +96,14 @@ async fn write_command_to_queue(sqs_client: &Client, played_command: common::dis
 
     println!("Queue URL is {}", queue_url);
 
+    let now = chrono::offset::Utc::now();
+
     let send_result = sqs_client
         .send_message()
         .queue_url(queue_url)
         .message_body(msg_body)
         .message_group_id("LolCommandGroup")
+        .message_deduplication_id(format!("{}-{}-{}", played_command.player_name, played_command.days, now.to_rfc3339()))
         .send()
         .await;
 
