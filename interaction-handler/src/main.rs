@@ -98,12 +98,15 @@ async fn write_command_to_queue(sqs_client: &Client, played_command: common::dis
 
     let now = chrono::offset::Utc::now();
 
+    let mut dedup_id = format!("{}-{}-{}", played_command.player_name, played_command.days, now.to_rfc3339());
+    dedup_id.retain(|c| !c.is_whitespace());
+
     let send_result = sqs_client
         .send_message()
         .queue_url(queue_url)
         .message_body(msg_body)
         .message_group_id("LolCommandGroup")
-        .message_deduplication_id(format!("{}-{}-{}", played_command.player_name, played_command.days, now.to_rfc3339()))
+        .message_deduplication_id(dedup_id)
         .send()
         .await;
 

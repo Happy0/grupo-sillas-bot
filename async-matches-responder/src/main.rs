@@ -56,8 +56,7 @@ async fn handle_played_command(
 
     let mut headers = reqwest::header::HeaderMap::new();
     let value = reqwest::header::HeaderValue::from_static("application/json");
-    let x = headers.insert("Content-Type", value);
-
+    headers.insert("Content-Type", value);
 
     let request_url = format!("https://discord.com/api/webhooks/{}/{}/messages/@original", command.application_id, command.token);
     let send_result = discord_http_client
