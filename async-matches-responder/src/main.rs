@@ -43,10 +43,20 @@ async fn handle_played_command(
     discord_http_client: &reqwest:: Client,
     command: &common::discord_bot_types::PlayedCommand) -> Result<(), common::discord_bot_types::BotError> {
 
-    let result = lol_command::execute_played_command(lol_api_fetcher, command).await?;
+    let result = lol_command::execute_played_command(lol_api_fetcher, command).await;
+
+    let message = match result {
+        Err(bot_error) if bot_error.statusCode == 409 => "Too many requests in a short period of time, try again in a minute.".to_string(),
+        Err(bot_error) if bot_error.statusCode == 404 => "User not found.".to_string(),
+        Ok(msg) => msg.to_string(),
+        Err(bot_error) => {
+            println!("Unknown error: {:?}", bot_error);
+            "An unknown error occurred.".to_string()
+        }
+    };
 
     let discord_content_body = models::DiscordResponseBody {
-        content: result
+        content: message.to_string()
     };
 
     let body = serde_json::to_string(&discord_content_body).map_err(|x| common::discord_bot_types::BotError {
