@@ -18,3 +18,8 @@ jobs:
           lol-api-key: ${{ secrets.LOL_API_KEY }}
           aws-secret: ${{ secrets.AWS_SECRET }}
           aws-secret-key: ${{ secrets.AWS_SECRET_KEY }}
+
+# Only one build at a time
+concurrency: 
+  group: main
+  cancel-in-progress: true
