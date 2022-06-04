@@ -24,6 +24,7 @@ dependencies = [
  "common",
  "lambda_runtime",
  "lol",
+ "reqwest",
  "serde",
  "serde_json",
  "tokio",

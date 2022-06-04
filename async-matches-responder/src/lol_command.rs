@@ -5,7 +5,7 @@ use crate::models;
 
 pub async fn execute_played_command(
     lol_api_fetcher: &lol::api_fetcher::BoundedHttpFetcher,
-    command: discord_bot_types::PlayedCommand
+    command: &discord_bot_types::PlayedCommand
     ) -> Result<String, discord_bot_types::BotError> {
     
     println!("Executing played command");
@@ -26,7 +26,7 @@ pub async fn execute_played_command(
     let wins = calculate_wins(&models);
     let loses = calculate_loses(&models);
 
-    let game_summary_strings = models.iter().map(create_game_stats_string);
+    let game_summary_strings = models.iter().take(10).map(create_game_stats_string);
 
     let mut message= format!("{} has played for {} over {} days\nThey won {} games and lost {}", command.player_name, time_played_string, command.days, wins, loses).to_string();
     message.push_str("\n");

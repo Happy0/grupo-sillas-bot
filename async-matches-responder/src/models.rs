@@ -1,8 +1,25 @@
 use lol;
 use common::discord_bot_types;
+use serde::{Deserialize, Serialize};
 
 pub struct Toolbox {
-    pub lol_api_fetcher: lol::api_fetcher::BoundedHttpFetcher
+    pub lol_api_fetcher: lol::api_fetcher::BoundedHttpFetcher,
+    pub discord_http_client: reqwest::Client
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct QueueBatch {
+    pub Records: Vec<QueueRecord>
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct QueueRecord {
+    pub body: String
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DiscordResponseBody {
+    pub content: String
 }
 
 /**
