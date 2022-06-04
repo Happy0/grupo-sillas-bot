@@ -1,5 +1,6 @@
+use serde::{Deserialize, Serialize};
 use lol;
-use common::discord_bot_types;
+use common::discord_bot_types::{BotError};
 
 pub struct Toolbox {
     pub lol_api_fetcher: lol::api_fetcher::BoundedHttpFetcher
@@ -9,7 +10,7 @@ pub struct Toolbox {
  * Converts between an error received from the LoL API and
  * our internal representation of an error
  */
-pub fn to_bot_error(error: lol::models::LolApiError) -> discord_bot_types::BotError {
+pub fn to_bot_error(error: lol::models::LolApiError) -> BotError {
 
     let error_code: u64 = match error.http_code.as_str() {
         // Too many requests too quick
@@ -20,8 +21,9 @@ pub fn to_bot_error(error: lol::models::LolApiError) -> discord_bot_types::BotEr
         x => 500
     };
 
-    discord_bot_types::BotError {
+    BotError {
         statusCode: error_code,
         body: error.description
     }
 }
+

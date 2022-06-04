@@ -2,5 +2,6 @@
 
 members = [
     "interaction-handler",
-    "async-matches-responder"
+    "async-matches-responder",
+    "common"
 ]

@@ -1,38 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use lol;
-
-pub struct Toolbox {
-    pub lol_api_fetcher: lol::api_fetcher::BoundedHttpFetcher
-}
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BotError {
     pub statusCode: u64,
     pub body: String
-}
-
-/**
- * Converts between an error received from the LoL API and
- * our internal representation of an error
- */
-impl From<lol::models::LolApiError> for BotError {
-    fn from(error: lol::models::LolApiError) -> Self {
-
-        let error_code: u64 = match error.http_code.as_str() {
-            // Too many requests too quick
-            "429" => 429,
-            "404" => 404,
-
-            // Anything else is probably our bug
-            x => 500
-        };
-
-        BotError {
-            statusCode: error_code,
-            body: error.description
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -74,6 +45,7 @@ pub struct DiscordReceivedCommand {
     #[serde(rename(serialize = "type", deserialize = "type"))]
     pub typeField: u64,
     pub token: String,
+    pub application_id: String,
     pub data: Option<Command>
 }
 
@@ -107,7 +79,11 @@ pub struct Command {
     pub options: Vec<CommandOption>
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct PlayedCommand {
+    pub token: String,
+    pub application_id: String,
     pub player_name: String,
-    pub days: u64
+    pub days: u64,
+    pub game_type: Option<String>
 }

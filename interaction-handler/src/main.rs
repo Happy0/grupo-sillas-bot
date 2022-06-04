@@ -1,26 +1,27 @@
+use common::discord_bot_types;
 use lambda_runtime::{service_fn, LambdaEvent, Error};
-use serde_json::{json, Value};
-use lol;
+use serde_json::{Value, json};
+use aws_sdk_sqs::Client;
+use aws_config::meta::region::RegionProviderChain;
+use std::env;
 
 mod auth;
-mod discord_bot_types;
 mod lol_command;
+mod models;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let api_fetcher: lol::api_fetcher::BoundedHttpFetcher = lol::api_fetcher::create_lol_client(20,100);
+    let region_provider = RegionProviderChain::default_provider().or_else("eu-west-1");
+    let config = aws_config::from_env().region(region_provider).load().await;
+    let client = Client::new(&config);
 
-    let toolbox = discord_bot_types::Toolbox {
-        lol_api_fetcher: api_fetcher
-    };
-
-    let func = service_fn(|x| func(&toolbox, x));
+    let func = service_fn(|x| func(&client, x));
     lambda_runtime::run(func).await?;
     Ok(())
 }
 
-async fn func(toolbox: &discord_bot_types::Toolbox, event: LambdaEvent<Value>) -> Result<Value, serde_json::Error> {
-    let result = process_request(toolbox, event).await;
+async fn func(sqs_client: &Client, event: LambdaEvent<Value>) -> Result<Value, serde_json::Error> {
+    let result = process_request(sqs_client, event).await;
 
     // AWS Lambda expects the returned 'body' field to be a JSON string, so we convert the bot response to a JSON string
     // and return it with the response headers and HTTP status code
@@ -45,7 +46,7 @@ async fn func(toolbox: &discord_bot_types::Toolbox, event: LambdaEvent<Value>) -
     return send;
 }
 
-async fn process_request(toolbox: &discord_bot_types::Toolbox, event: LambdaEvent<Value>) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
+async fn process_request(sqs_client: &Client, event: LambdaEvent<Value>) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
     let (event, _context) = event.into_parts();
     auth::verify_request(&event).then(|| true).ok_or(discord_bot_types::BotError{statusCode: 401, body: "invalid request signature".to_string()})?;
 
@@ -62,37 +63,49 @@ async fn process_request(toolbox: &discord_bot_types::Toolbox, event: LambdaEven
         1 => {return Ok(make_ping_response())},
         2 => {
             let command = payload_value.data.ok_or(make_validation_error_response("Command missing 'data' field.".to_string()))?;
-            return create_command_response(toolbox, command).await;
+            let played_command = lol_command::build_played_command(command, payload_value.token, payload_value.application_id);
+
+            match played_command {
+                Err(x) => {
+                    return Err(make_error_response(400, "Could not parse options"))
+                },
+                Ok (options) => {
+                    write_command_to_queue(sqs_client, options).await?;
+                    return create_deferred_command_response()
+                }
+            }
+
         },
         _ => {
             return Err(make_error_response(400, "Unrecognised command type")); 
         }
     };
-
 }
 
-async fn create_command_response(toolbox: &discord_bot_types::Toolbox, command_data: discord_bot_types::Command ) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
+async fn write_command_to_queue(sqs_client: &Client, played_command: common::discord_bot_types::PlayedCommand) -> Result<(), discord_bot_types::BotError> {
 
-    let command_name = command_data.name.as_str();
+    let queue_url = env::var("MATCHES_QUEUE_URL").map_err(|x| discord_bot_types::BotError {
+        statusCode: 500,
+        body: "Missing MATCHES_QUEUE_URL environment variable".to_string()
+    })?;
 
-    let bot_response: String = match command_name {
-        "played" | "ranked" => {
-            let game_type = if command_name == "played" {Some("ranked".to_string())} else {None};
+    let msg_body = serde_json::to_string(&played_command).map_err(|X| discord_bot_types::BotError {
+        statusCode: 500,
+        body: "Could not write SQS payload to JSON string".to_string()
+    });
 
-            let result = lol_command::execute_played_command(&toolbox.lol_api_fetcher, command_data, game_type).await;
+    sqs_client
+        .send_message()
+        .queue_url(queue_url)
+        .message_body("hello from my queue")
+        .message_group_id("LolCommandGroup")
+        .send()
+        .await;
 
-            match result {
-                Ok(message) => message,
-                Err(err) if err.statusCode == 429 => "Too many league of legends requests too quickly. Please wait a minute or two.".to_string(),
-                Err(err) if err.statusCode == 404 => "User not found.".to_string(),
-                Err(err) => {
-                    println!("Error from league of legends API: {}", err.body);
-                    "Unexpected error while processing command.".to_string()
-                }
-            }
-        },
-        x => {format!("Unrecognise command: {}", x)}
-    };
+    Ok(())
+}
+
+fn create_deferred_command_response() -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
 
     return Ok(discord_bot_types::BotResponse {
             headers: discord_bot_types::Headers {
@@ -100,11 +113,8 @@ async fn create_command_response(toolbox: &discord_bot_types::Toolbox, command_d
             },
             statusCode: 200,
             body: discord_bot_types::Body {
-                typeField: 4,
-                data: Some(discord_bot_types::Data {
-                    tts: false,
-                    content: bot_response
-                })
+                typeField: 5,
+                data: None
             }
     });
 }

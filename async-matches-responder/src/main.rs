@@ -3,6 +3,8 @@ use serde_json::{json, Value};
 use lol;
 mod models;
 
+mod lol_command;
+
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let api_fetcher: lol::api_fetcher::BoundedHttpFetcher = lol::api_fetcher::create_lol_client(20,100);
