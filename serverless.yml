@@ -19,12 +19,20 @@ functions:
     environment:
       DISCORD_BOT_PUBLIC_KEY: ${env:DISCORD_PUBLIC_KEY}
       LOL_API_KEY: ${env:LOL_API_KEY}
+      MATCHES_QUEUE_URL: { Ref: LolMatchesQueue }
     events:
       - httpApi: 'POST /interaction'
   asyncMatchesResponderHandler:
     handler: async-matches-responder
     environment:
-      INPUT_QUEUE: { Ref: LolMatchesQueue }
+      DISCORD_BOT_PUBLIC_KEY: ${env:DISCORD_PUBLIC_KEY}
+      LOL_API_KEY: ${env:LOL_API_KEY}
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - LolMatchesQueue
+              - Arn
 
 resources:
   Resources:
