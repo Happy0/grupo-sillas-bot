@@ -46,7 +46,7 @@ async fn handle_played_command(
     let result = lol_command::execute_played_command(lol_api_fetcher, command).await;
 
     let message = match result {
-        Err(bot_error) if bot_error.statusCode == 409 => "Too many requests in a short period of time, try again in a minute.".to_string(),
+        Err(bot_error) if bot_error.statusCode == 429 => "Too many requests in a short period of time, try again in a minute.".to_string(),
         Err(bot_error) if bot_error.statusCode == 404 => "User not found.".to_string(),
         Ok(msg) => msg.to_string(),
         Err(bot_error) => {
