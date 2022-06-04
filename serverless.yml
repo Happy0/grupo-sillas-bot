@@ -4,16 +4,17 @@ provider:
   name: aws
   runtime: rust
   memorySize: 128
-  iam:
-    role:
-      statements:
-        # Allow functions to write to matches sqs queue
-        - Effect: Allow
-          Action:
-            - 'sqs:ListQueues'
-            - 'sqs:SendMessage'
-          Resource:
-            - Fn::GetAtt: [LolMatchesQueue, Arn]
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - 'sqs:ListQueues'
+      Resource: *
+    # Allow functions to write to matches sqs queue
+    - Effect: Allow
+      Action:
+        - 'sqs:SendMessage'
+      Resource:
+        - Fn::GetAtt: [LolMatchesQueue, Arn]
 plugins:
   - serverless-rust
 package:
