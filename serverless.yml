@@ -8,7 +8,7 @@ provider:
     - Effect: Allow
       Action:
         - 'sqs:ListQueues'
-      Resource: *
+      Resource: '*'
     # Allow functions to write to matches sqs queue
     - Effect: Allow
       Action:
