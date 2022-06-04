@@ -91,12 +91,12 @@ async fn write_command_to_queue(sqs_client: &Client, played_command: common::dis
     let msg_body = serde_json::to_string(&played_command).map_err(|X| discord_bot_types::BotError {
         statusCode: 500,
         body: "Could not write SQS payload to JSON string".to_string()
-    });
+    })?;
 
     let send_result = sqs_client
         .send_message()
         .queue_url(queue_url)
-        .message_body("hello from my queue")
+        .message_body(msg_body)
         .message_group_id("LolCommandGroup")
         .send()
         .await;
