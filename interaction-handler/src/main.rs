@@ -7,7 +7,6 @@ use std::env;
 
 mod auth;
 mod lol_command;
-mod models;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -94,13 +93,15 @@ async fn write_command_to_queue(sqs_client: &Client, played_command: common::dis
         body: "Could not write SQS payload to JSON string".to_string()
     });
 
-    sqs_client
+    let send_result = sqs_client
         .send_message()
         .queue_url(queue_url)
         .message_body("hello from my queue")
         .message_group_id("LolCommandGroup")
         .send()
         .await;
+
+    println!("SQS send result: {:?}", send_result);
 
     Ok(())
 }
