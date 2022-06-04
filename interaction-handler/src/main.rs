@@ -93,6 +93,8 @@ async fn write_command_to_queue(sqs_client: &Client, played_command: common::dis
         body: "Could not write SQS payload to JSON string".to_string()
     })?;
 
+    println!("Queue URL is {}", queue_url);
+
     let send_result = sqs_client
         .send_message()
         .queue_url(queue_url)
