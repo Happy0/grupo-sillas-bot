@@ -11,7 +11,7 @@ provider:
         - Effect: Allow
           Action:
             - 'sqs:ListQueues'
-            - sqs:SendMessage
+            - 'sqs:SendMessage'
           Resource:
             - Fn::GetAtt: [LolMatchesQueue, Arn]
 plugins:
