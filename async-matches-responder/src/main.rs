@@ -60,5 +60,12 @@ async fn handle_played_command(
 
     println!("Discord send result: {:?}", send_result);
 
+    let result_text = send_result.map( move |x| {x.text()} );
+
+    match result_text {
+        Ok(txt) => println!("{:?}", txt.await),
+        Err(err) => println!("{:?}", err)
+    }
+
     Ok(())
 }
