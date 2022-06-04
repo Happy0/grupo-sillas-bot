@@ -35,6 +35,7 @@ functions:
       - httpApi: 'POST /interaction'
   asyncMatchesResponderHandler:
     handler: async-matches-responder
+    timeout: 60
     environment:
       DISCORD_BOT_PUBLIC_KEY: ${env:DISCORD_PUBLIC_KEY}
       LOL_API_KEY: ${env:LOL_API_KEY}
