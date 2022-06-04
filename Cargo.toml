@@ -1,5 +1,6 @@
 [workspace]
 
 members = [
-    "interaction-handler"
+    "interaction-handler",
+    "async-matches-responder"
 ]

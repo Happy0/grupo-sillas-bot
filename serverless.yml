@@ -14,10 +14,22 @@ custom:
     dockerless: true
 
 functions:
-  test:
+  interactionHandler:
     handler: interaction-handler
     environment:
       DISCORD_BOT_PUBLIC_KEY: ${env:DISCORD_PUBLIC_KEY}
       LOL_API_KEY: ${env:LOL_API_KEY}
     events:
       - httpApi: 'POST /interaction'
+  asyncMatchesResponderHandler:
+    handler: async-matches-responder
+    environment:
+      INPUT_QUEUE: { Ref: LolMatchesQueue }
+
+resources:
+  Resources:
+    LolMatchesQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: sqs-matches-commands-queue.fifo
+        FifoQueue: true
