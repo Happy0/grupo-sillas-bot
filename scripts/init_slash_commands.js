@@ -1,6 +1,16 @@
 const {REST} = require('@discordjs/rest');
 const {Routes} = require('discord-api-types/v9');
 
+const generateDaysChoices = (maxNumberOfDays) => {
+  const days = [...Array(maxNumberOfDays).keys()];
+
+  return days.map(day => (
+    {
+      "name": '' + day,
+      "value": day
+    }));
+}
+
 const commands = [
   {
     name: 'played',
@@ -16,20 +26,7 @@ const commands = [
         "description": "Over the last how many days.",
         "required": true,
         "type": 4,
-        "choices": [
-          {
-            "name": "1",
-            "value": 1
-          },
-          {
-            "name": "2",
-            "value": 2
-          },
-          {
-            "name": "3",
-            "value": 3
-          }
-        ]
+        "choices": generateDaysChoices(7)
     }]
   },
   {
@@ -46,21 +43,8 @@ const commands = [
       "description": "Over the last how many days.",
       "required": true,
       "type": 4,
-      "choices": [
-        {
-          "name": "1",
-          "value": 1
-        },
-        {
-          "name": "2",
-          "value": 2
-        },
-        {
-          "name": "3",
-          "value": 3
-        }
-      ]
-  }]
+      "choices": generateDaysChoices(7)
+    }]
   },
 ];
 
