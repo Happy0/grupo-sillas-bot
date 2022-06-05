@@ -1,18 +1,16 @@
 // TODO: helper function for doing fetches in rate limit friendly way
 // Returns a future, internally processes sequentially...
-use crate::models;
 
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Sender, Receiver};
 use reqwest::Response;
 use reqwest:: Error;
-use reqwest::Client;
 use tokio::task;
 use tokio::sync::oneshot;
-use std::time::{Duration, SystemTime};
-use futures::future::FutureExt;
+use std::time::{Duration};
 use tokio::time::sleep;
 use core::clone::Clone;
+use crate::models;
 
 pub struct SendCommand {
     url: String,
@@ -70,22 +68,18 @@ pub async fn handle_requests(mut receiver: Receiver<SendCommand>, per_second_lim
     let mut request_count: u64 = 0;
     let client = reqwest::Client::new();
 
-    // A crude way of making sure we don't exceed the rate limit of the LoL API (at least the per second one for now)
     while let Some(cmd) = receiver.recv().await {
         let request_url = cmd.url;
         let sender = cmd.receiver;
         let cloned_client = client.clone();
 
         task::spawn (async move {
+            println!("{}", request_url);
+            let result = send_request(cloned_client, request_url).await;
+            let send_result = sender.send(result);
 
-            let result = cloned_client
-                .get(request_url)
-                .send()
-                .then(|res| async move {sender.send(res)})
-                .await;
-
-            if (!result.is_ok()) {
-                println!("Ahh not okie")
+            if !send_result.is_ok() {
+                println!("Ahh not okie (could not send to oneshot channel)")
             }
         });
 
@@ -104,5 +98,73 @@ pub async fn handle_requests(mut receiver: Receiver<SendCommand>, per_second_lim
         }
 
 
+    }
+}
+
+async fn send_request(client: reqwest::Client, request_url: String) -> Result<reqwest::Response, reqwest::Error> {
+
+    // TODO: Make this less branchy by creating a shared error result and using result type ? macro.
+    let mut attempts_remaining: u64 = 5;
+    loop {
+        let result = client
+            .get(&request_url)
+            .send()
+            .await;
+
+        match &result {
+            Err(x) => {
+                return result;
+            },
+            Ok(http_result) => {
+                if http_result.status() == 429 {
+                    println!("It's a 429, waiting...");
+
+                    let headers = http_result.headers();
+                    let retry_after = &headers.get("Retry-After");
+
+                    match retry_after {
+                        Some(val) => {
+                            let header_as_str = val.to_str();
+
+                            match header_as_str {
+                                Err(err) => {
+                                    println!("Could not parse Retry-After header value to string.");
+                                    return result;
+                                },
+                                Ok(header_str) => {
+                                    let wait_for = header_str.parse::<u64>();
+
+                                    match wait_for {
+                                        Ok(wait_for) => {
+                                            println!("Sleeping for {}", wait_for);
+                                            sleep(Duration::from_secs(wait_for)).await;
+                                        },
+                                        Err(err) => {
+                                            println!("Could not parse retry after header to int");
+                                            return result;
+                                        }
+                                    }
+                                }
+                            }
+
+                        },
+                        None => {
+                            println!("No Retry-After header");
+                            return result;
+                        }
+                    }
+
+
+                } else {
+                    return result;
+                }
+            }
+        }
+
+        attempts_remaining = attempts_remaining - 1;
+
+        if attempts_remaining <= 0 {
+            return result;
+        }
     }
 }
