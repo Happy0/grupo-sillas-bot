@@ -6,7 +6,7 @@ const generateDaysChoices = (maxNumberOfDays) => {
 
   return days.map(day => (
     {
-      "name": '' + day + 1,
+      "name": '' + (day + 1),
       "value": day + 1
     }));
 }
