@@ -15,7 +15,21 @@ const commands = [
         "name": "days",
         "description": "Over the last how many days.",
         "required": true,
-        "type": 4
+        "type": 4,
+        "choices": [
+          {
+            "name": "1",
+            "value": 1
+          },
+          {
+            "name": "2",
+            "value": 2
+          },
+          {
+            "name": "3",
+            "value": 3
+          }
+        ]
     }]
   },
   {
@@ -28,11 +42,25 @@ const commands = [
         "required": true,
         "type": 3
     },{
-        "name": "days",
-        "description": "Over the last how many days.",
-        "required": true,
-        "type": 4
-    }]
+      "name": "days",
+      "description": "Over the last how many days.",
+      "required": true,
+      "type": 4,
+      "choices": [
+        {
+          "name": "1",
+          "value": 1
+        },
+        {
+          "name": "2",
+          "value": 2
+        },
+        {
+          "name": "3",
+          "value": 3
+        }
+      ]
+  }]
   },
 ];
 
