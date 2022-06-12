@@ -11,8 +11,6 @@ use std::time::{Duration};
 use tokio::time::sleep;
 use core::clone::Clone;
 use crate::models;
-use tokio_stream::{self as stream, StreamExt};
-use regex::Regex;
 
 pub struct SendCommand {
     url: String,
@@ -20,27 +18,21 @@ pub struct SendCommand {
 } 
 
 pub struct BoundedHttpFetcher {
-    sender: Sender<SendCommand>,
-    per_second_limit: usize
+    sender: Sender<SendCommand>
 }
 
-pub fn create_lol_client(per_second_limit: usize) -> Result<BoundedHttpFetcher, models::LolApiError> {
-    let (tx, rx): (Sender<SendCommand>, Receiver<SendCommand>) = mpsc::channel(32);
+pub fn create_lol_client(per_second_limit: usize) -> BoundedHttpFetcher {
+    let (tx, rx): (Sender<SendCommand>, Receiver<SendCommand>) = mpsc::channel(40);
 
-    let rate_limit_regex = Regex::new(r"\d[:]\d,\d[:]\d").map_err(|err| models::LolApiError {
-        description: format!("Could not build regex matcher: {}", err),
-        http_code: "500".to_string()
-    })?;
     let client = reqwest::Client::new();
 
     let fetcher = BoundedHttpFetcher {
-        sender: tx,
-        per_second_limit: per_second_limit
+        sender: tx
     };
 
-    task::spawn(handle_requests(rx, rate_limit_regex, per_second_limit));
+    task::spawn(handle_requests(rx, per_second_limit));
 
-    return Ok(fetcher);
+    return fetcher;
 }
 
 pub async fn get_request(fetcher: &BoundedHttpFetcher, url: String) -> Result<Response, models::LolApiError> {
@@ -69,18 +61,18 @@ pub async fn get_request(fetcher: &BoundedHttpFetcher, url: String) -> Result<Re
     });
 }
 
-pub async fn handle_requests(mut receiver: Receiver<SendCommand>, rate_limit_regex: Regex, per_second_limit: usize) {
+pub async fn handle_requests(mut receiver: Receiver<SendCommand>, per_second_limit: usize) {
     let client = reqwest::Client::new();
     let mut space_left: usize = per_second_limit;
 
     while let Some(v) = receiver.recv().await {
         let mut handles: Vec<tokio::task::JoinHandle<Option<models::RateLimitInfo>>> = Vec::new();
-        let req_handle = do_request(client.clone(), &rate_limit_regex, v);
+        let req_handle = do_request(client.clone(), v);
         handles.push(req_handle);
 
         let mut limit = space_left;
         while let Ok(x) = receiver.try_recv() {
-            let handle = do_request(client.clone(), &rate_limit_regex, x);
+            let handle = do_request(client.clone(), x);
             handles.push(handle);
             limit = limit - 1;
 
@@ -95,9 +87,9 @@ pub async fn handle_requests(mut receiver: Receiver<SendCommand>, rate_limit_reg
 
             match rate_limit_info {
                 (Ok(Some(info)), ) => {
-                    if info.receivedAt > latest_response {
+                    if info.received_at > latest_response {
                         space_left = info.remaining_per_second;
-                        latest_response = info.receivedAt;
+                        latest_response = chrono::DateTime::from(info.received_at);
                     }
                 },
                 _ => {
@@ -115,13 +107,11 @@ pub async fn handle_requests(mut receiver: Receiver<SendCommand>, rate_limit_reg
     }
 }
 
- fn do_request(client: reqwest::Client, rate_limit_regex: &Regex, cmd: SendCommand) -> tokio::task::JoinHandle<Option<models::RateLimitInfo>> {
+ fn do_request(client: reqwest::Client, cmd: SendCommand) -> tokio::task::JoinHandle<Option<models::RateLimitInfo>> {
 
     let request_url = cmd.url;
     let sender = cmd.receiver;
     let cloned_client = client.clone();
-
-    let rate_lim = rate_limit_regex.clone();
 
     let x = task::spawn (async move {
         println!("{}", request_url);
@@ -130,19 +120,7 @@ pub async fn handle_requests(mut receiver: Receiver<SendCommand>, rate_limit_reg
         let rate_limit_info: Option<models::RateLimitInfo> = match &result {
             Ok(res) => {
                 let headers = res.headers();
-                let received_at = &headers.get("Date").and_then(|x| x.to_str().ok());
-                let rate_limit_header = &headers.get("X-App-Rate-Limit").and_then(|x| x.to_str().ok());
-
-                let test = rate_limit_header.and_then(|header_value| rate_lim.captures(header_value));
-
-                let second_limit: Option<usize> = test.and_then(|x| x.get(0).map(|y| y.as_str())).and_then(|x| x.parse().ok());
-                let minute_limit: Option<usize> = test.and_then(|x| x.get(1).map(|y| y.as_str())).and_then(|x| x.parse().ok());
-
-                let x = panic!("");
-                match (second_limit, minute_limit) {
-                    (Some(sec), Some(min)) => Some(models::RateLimitInfo { receivedAt: x, remaining_per_second: sec, remaining_per_minute: min }),
-                    x => {None}
-                }
+                return get_ratelimit_info(headers);
             },  
             Err(err) => {None}
         };
@@ -160,16 +138,34 @@ pub async fn handle_requests(mut receiver: Receiver<SendCommand>, rate_limit_reg
     return x;
 }
 
+fn get_ratelimit_info(header_map: &reqwest::header::HeaderMap) -> Option<models::RateLimitInfo> {
 
+    let time_received = &header_map.get("Date").and_then(|x| x.to_str().ok())?;
+    let rate_limit_header = &header_map.get("X-App-Rate-Limit").and_then(|x| x.to_str().ok())?;
 
-fn get_remaining(x: String) -> Option<usize> {
-    let remaining = x.chars().take_while(|&y| y != ':').collect::<String>();
-    return remaining.parse().ok();
+    let min_sec_split: Vec<&str> = rate_limit_header.split(",").collect();
+
+    let secs_split:  Vec<&str> = min_sec_split.get(0).map(|x| x.split(":").collect())?;
+    let min_split:  Vec<&str> = min_sec_split.get(1).map(|x| x.split(":").collect())?;
+
+    let left_in_seconds = secs_split.get(0)?;
+    let left_in_minutes = min_split.get(0)?;
+
+    let left_secs = left_in_seconds.parse::<usize>().ok()?;
+    let left_mins = left_in_minutes.parse::<usize>().ok()?;
+
+    let received = chrono::DateTime::parse_from_rfc2822(&time_received).ok()?;
+
+    return Some(models::RateLimitInfo {
+        received_at: received,
+        remaining_per_second: left_secs,
+        remaining_per_minute: left_mins
+    });
 }
 
 async fn send_request(client: reqwest::Client, request_url: String) -> Result<reqwest::Response, reqwest::Error> {
 
-    // TODO: Make this less branchy by creating a shared error result and using result type ? macro.
+    // TODO: Omg spaghetti. Make this less branchy by creating a shared error result and using result type ? macro.
     let mut attempts_remaining: u64 = 5;
     loop {
         let result = client

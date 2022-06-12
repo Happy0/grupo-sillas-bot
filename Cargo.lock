@@ -1006,12 +1006,10 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "futures",
- "regex",
  "reqwest",
  "serde",
  "serde_json",
  "tokio",
- "tokio-stream",
 ]
 
 [[package]]

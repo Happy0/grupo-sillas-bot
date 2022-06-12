@@ -46,7 +46,7 @@ pub struct UserGameSummary {
 }
 
 pub struct RateLimitInfo {
-    pub receivedAt: chrono::DateTime<Utc>,
+    pub received_at: chrono::DateTime<FixedOffset>,
     pub remaining_per_second: usize,
     pub remaining_per_minute: usize
 }
