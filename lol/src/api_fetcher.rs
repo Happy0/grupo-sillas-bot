@@ -11,28 +11,27 @@ use std::time::{Duration};
 use tokio::time::sleep;
 use core::clone::Clone;
 use crate::models;
+use tokio_stream::{self as stream, StreamExt};
 
 pub struct SendCommand {
     url: String,
     receiver: oneshot::Sender<Result<Response, Error>>
-}
+} 
 
 pub struct BoundedHttpFetcher {
     sender: Sender<SendCommand>,
-    per_second_limit: u64,
-    per_minute_limit: u64
+    per_second_limit: usize
 }
 
-pub fn create_lol_client(per_second_limit: u64, per_minute_limit: u64) -> BoundedHttpFetcher {
+pub fn create_lol_client(per_second_limit: usize) -> BoundedHttpFetcher {
     let (tx, rx): (Sender<SendCommand>, Receiver<SendCommand>) = mpsc::channel(32);
 
     let fetcher = BoundedHttpFetcher {
         sender: tx,
-        per_second_limit: per_second_limit,
-        per_minute_limit: per_minute_limit
+        per_second_limit: per_second_limit
     };
 
-    task::spawn(handle_requests(rx, per_second_limit, per_minute_limit));
+    task::spawn(handle_requests(rx, per_second_limit));
 
     return fetcher;
 }
@@ -63,42 +62,86 @@ pub async fn get_request(fetcher: &BoundedHttpFetcher, url: String) -> Result<Re
     });
 }
 
-pub async fn handle_requests(mut receiver: Receiver<SendCommand>, per_second_limit: u64, per_minute_limit: u64) {
-
-    let mut request_count: u64 = 0;
+pub async fn handle_requests(mut receiver: Receiver<SendCommand>, per_second_limit: usize) {
     let client = reqwest::Client::new();
+    let mut space_left: usize = per_second_limit;
 
-    while let Some(cmd) = receiver.recv().await {
-        let request_url = cmd.url;
-        let sender = cmd.receiver;
-        let cloned_client = client.clone();
+    while let Some(v) = receiver.recv().await {
+        let mut handles: Vec<tokio::task::JoinHandle<Option<models::RateLimitInfo>>> = Vec::new();
+        let req_handle = do_request(client.clone(), v);
+        handles.push(req_handle);
 
-        task::spawn (async move {
-            println!("{}", request_url);
-            let result = send_request(cloned_client, request_url).await;
-            let send_result = sender.send(result);
+        let mut limit = space_left;
+        while let Ok(x) = receiver.try_recv() {
+            let handle = do_request(client.clone(), x);
+            handles.push(handle);
+            limit = limit - 1;
 
-            if !send_result.is_ok() {
-                println!("Ahh not okie (could not send to oneshot channel)")
+            if limit <= 0 {
+                break;
             }
-        });
-
-        //let x = sender.send(result);
-
-        // if !x.is_ok() {
-        //     println!("Could not send result for {}", request_url);
-        // }
-
-        if request_count < per_second_limit {
-            request_count = request_count + 1;
-        } else {
-            println!("Sleeping!");
-            sleep(Duration::from_secs(2)).await;
-            request_count = 0;
         }
 
+        let mut latest_response: chrono::DateTime<chrono::Utc> = chrono::offset::Utc::now() - chrono::Duration::days(1);
+        for handle in handles {
+            let rate_limit_info = tokio::join!(handle);
 
+            match rate_limit_info {
+                (Ok(Some(info)), ) => {
+                    if info.receivedAt > latest_response {
+                        space_left = info.remaining_per_second;
+                        latest_response = info.receivedAt;
+                    }
+                },
+                _ => {
+                    println!("Something unexpected went wrong while reading the rate limit info")
+                }
+            }
+
+            println!("space left: {}", space_left);
+            if space_left <= 0 {
+                println!("Sleeping!");
+                sleep(Duration::from_secs(1)).await;
+                space_left = per_second_limit;
+            }
+        }
     }
+}
+
+ fn do_request(client: reqwest::Client, cmd: SendCommand) -> tokio::task::JoinHandle<Option<models::RateLimitInfo>> {
+
+    let request_url = cmd.url;
+    let sender = cmd.receiver;
+    let cloned_client = client.clone();
+
+    let x = task::spawn (async move {
+        println!("{}", request_url);
+        let result = send_request(cloned_client, request_url).await;
+
+        let rate_limit_info: Option<models::RateLimitInfo> = match &result {
+            Ok(res) => {
+                let headers = res.headers();
+                let received_at = &headers.get("Date").and_then(|x| x.to_str().ok());
+                let rate_limit_header = &headers.get("X-App-Rate-Limit").and_then(|x| x.to_str().ok());
+
+                let y: Option<Vec<&str>> = rate_limit_header.map(|x| x.split(",").collect());
+
+                panic!("")
+            },
+            Err(err) => {None}
+        };
+
+        let send_result = sender.send(result);
+
+        if !send_result.is_ok() {
+            println!("Ahh not okie (could not send to oneshot channel)")
+        }
+
+        // TODO: pull thing out header
+        return rate_limit_info;
+    });
+
+    return x;
 }
 
 async fn send_request(client: reqwest::Client, request_url: String) -> Result<reqwest::Response, reqwest::Error> {

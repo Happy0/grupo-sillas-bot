@@ -7,7 +7,7 @@ mod lol_command;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let api_fetcher: lol::api_fetcher::BoundedHttpFetcher = lol::api_fetcher::create_lol_client(20,100);
+    let api_fetcher: lol::api_fetcher::BoundedHttpFetcher = lol::api_fetcher::create_lol_client(20);
     let client = reqwest::Client::new();
     let toolbox = models::Toolbox {
         lol_api_fetcher: api_fetcher,

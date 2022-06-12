@@ -1,5 +1,7 @@
 
 use serde::{Deserialize, Serialize};
+use chrono;
+use chrono::prelude::*;
 
 #[derive(Debug)]
 pub struct LolApiError {
@@ -41,6 +43,12 @@ pub struct UserGameSummary {
     pub match_id: String,
     pub participant: Participant,
     pub game_duration_millis: u64
+}
+
+pub struct RateLimitInfo {
+    pub receivedAt: chrono::DateTime<Utc>,
+    pub remaining_per_second: usize,
+    pub remaining_per_minute: usize
 }
 
 impl std::convert::From<reqwest::Error> for LolApiError {
