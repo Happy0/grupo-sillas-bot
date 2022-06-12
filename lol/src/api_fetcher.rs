@@ -12,6 +12,7 @@ use tokio::time::sleep;
 use core::clone::Clone;
 use crate::models;
 use tokio_stream::{self as stream, StreamExt};
+use regex::Regex;
 
 pub struct SendCommand {
     url: String,
@@ -23,17 +24,23 @@ pub struct BoundedHttpFetcher {
     per_second_limit: usize
 }
 
-pub fn create_lol_client(per_second_limit: usize) -> BoundedHttpFetcher {
+pub fn create_lol_client(per_second_limit: usize) -> Result<BoundedHttpFetcher, models::LolApiError> {
     let (tx, rx): (Sender<SendCommand>, Receiver<SendCommand>) = mpsc::channel(32);
+
+    let rate_limit_regex = Regex::new(r"\d[:]\d,\d[:]\d").map_err(|err| models::LolApiError {
+        description: format!("Could not build regex matcher: {}", err),
+        http_code: "500".to_string()
+    })?;
+    let client = reqwest::Client::new();
 
     let fetcher = BoundedHttpFetcher {
         sender: tx,
         per_second_limit: per_second_limit
     };
 
-    task::spawn(handle_requests(rx, per_second_limit));
+    task::spawn(handle_requests(rx, rate_limit_regex, per_second_limit));
 
-    return fetcher;
+    return Ok(fetcher);
 }
 
 pub async fn get_request(fetcher: &BoundedHttpFetcher, url: String) -> Result<Response, models::LolApiError> {
@@ -62,18 +69,18 @@ pub async fn get_request(fetcher: &BoundedHttpFetcher, url: String) -> Result<Re
     });
 }
 
-pub async fn handle_requests(mut receiver: Receiver<SendCommand>, per_second_limit: usize) {
+pub async fn handle_requests(mut receiver: Receiver<SendCommand>, rate_limit_regex: Regex, per_second_limit: usize) {
     let client = reqwest::Client::new();
     let mut space_left: usize = per_second_limit;
 
     while let Some(v) = receiver.recv().await {
         let mut handles: Vec<tokio::task::JoinHandle<Option<models::RateLimitInfo>>> = Vec::new();
-        let req_handle = do_request(client.clone(), v);
+        let req_handle = do_request(client.clone(), &rate_limit_regex, v);
         handles.push(req_handle);
 
         let mut limit = space_left;
         while let Ok(x) = receiver.try_recv() {
-            let handle = do_request(client.clone(), x);
+            let handle = do_request(client.clone(), &rate_limit_regex, x);
             handles.push(handle);
             limit = limit - 1;
 
@@ -108,11 +115,13 @@ pub async fn handle_requests(mut receiver: Receiver<SendCommand>, per_second_lim
     }
 }
 
- fn do_request(client: reqwest::Client, cmd: SendCommand) -> tokio::task::JoinHandle<Option<models::RateLimitInfo>> {
+ fn do_request(client: reqwest::Client, rate_limit_regex: &Regex, cmd: SendCommand) -> tokio::task::JoinHandle<Option<models::RateLimitInfo>> {
 
     let request_url = cmd.url;
     let sender = cmd.receiver;
     let cloned_client = client.clone();
+
+    let rate_lim = rate_limit_regex.clone();
 
     let x = task::spawn (async move {
         println!("{}", request_url);
@@ -124,10 +133,17 @@ pub async fn handle_requests(mut receiver: Receiver<SendCommand>, per_second_lim
                 let received_at = &headers.get("Date").and_then(|x| x.to_str().ok());
                 let rate_limit_header = &headers.get("X-App-Rate-Limit").and_then(|x| x.to_str().ok());
 
-                let y: Option<Vec<&str>> = rate_limit_header.map(|x| x.split(",").collect());
+                let test = rate_limit_header.and_then(|header_value| rate_lim.captures(header_value));
 
-                panic!("")
-            },
+                let second_limit: Option<usize> = test.and_then(|x| x.get(0).map(|y| y.as_str())).and_then(|x| x.parse().ok());
+                let minute_limit: Option<usize> = test.and_then(|x| x.get(1).map(|y| y.as_str())).and_then(|x| x.parse().ok());
+
+                let x = panic!("");
+                match (second_limit, minute_limit) {
+                    (Some(sec), Some(min)) => Some(models::RateLimitInfo { receivedAt: x, remaining_per_second: sec, remaining_per_minute: min }),
+                    x => {None}
+                }
+            },  
             Err(err) => {None}
         };
 
@@ -142,6 +158,13 @@ pub async fn handle_requests(mut receiver: Receiver<SendCommand>, per_second_lim
     });
 
     return x;
+}
+
+
+
+fn get_remaining(x: String) -> Option<usize> {
+    let remaining = x.chars().take_while(|&y| y != ':').collect::<String>();
+    return remaining.parse().ok();
 }
 
 async fn send_request(client: reqwest::Client, request_url: String) -> Result<reqwest::Response, reqwest::Error> {
