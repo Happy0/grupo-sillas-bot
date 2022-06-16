@@ -33,7 +33,7 @@ pub async fn get_ranked_games_summary(lol_api_fetcher: &lol::api_fetcher::Bounde
     match ranked_summary {
         None => Ok(format!("{} has not played any ranked games.", player_name)),
         Some(ranked_summary) => {
-            let mut message = format!("{} ({} {}, {} points) has played for {} over {} days\nThey won {} games and lost {}", player_name, ranked_summary.rank, ranked_summary.tier, ranked_summary.leaguePoints, time_played_string, days, game_summaries.wins, game_summaries.losses).to_string();
+            let mut message = format!("{} ({} {}, {} points) has played for {} over {} days\nThey won {} games and lost {}", player_name, ranked_summary.tier, ranked_summary.rank, ranked_summary.leaguePoints, time_played_string, days, game_summaries.wins, game_summaries.losses).to_string();
             message.push_str("\n");
             message.push_str(&create_summaries_string(game_summaries.games));
         
