@@ -47,7 +47,7 @@ pub struct UserGameSummary {
 pub struct LeagueEntry {
     pub tier: String,
     pub rank: String,
-    pub leaguePoints: String,
+    pub leaguePoints: u64,
     pub queueType: String,
     pub leagueId: String
 }
