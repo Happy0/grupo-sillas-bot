@@ -70,7 +70,7 @@ pub async fn get_current_rank(
     player_name: &str) -> Result<Option<lol::models::LeagueEntry>, discord_bot_types::BotError> {
 
     let summoner_id = lol::get_encrypted_summoner_id(lol_api_fetcher, "euw1", player_name, &api_key).await.map_err(models::to_bot_error)?;
-    return lol::get_solo_queue_ranking(lol_api_fetcher, "europe", summoner_id, &api_key).await.map_err(models::to_bot_error);
+    return lol::get_solo_queue_ranking(lol_api_fetcher, "euw1", summoner_id, &api_key).await.map_err(models::to_bot_error);
 }
 
 fn get_api_key() -> Result<String, discord_bot_types::BotError> {
