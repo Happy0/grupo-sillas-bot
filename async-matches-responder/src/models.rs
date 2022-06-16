@@ -22,6 +22,13 @@ pub struct DiscordResponseBody {
     pub content: String
 }
 
+pub struct GamesOverTimeSummary {
+    pub games: Vec<lol::models::UserGameSummary>,
+    pub wins: u64,
+    pub losses: u64,
+    pub played_for_millis: u64
+}
+
 /**
  * Converts between an error received from the LoL API and
  * our internal representation of an error

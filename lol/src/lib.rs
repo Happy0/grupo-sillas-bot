@@ -9,12 +9,9 @@ pub mod api_fetcher;
 pub mod models;
 
 pub async fn get_puuid(client: &api_fetcher::BoundedHttpFetcher, region: &str, user_name: &str, api_key: &str) -> Result<String, models::LolApiError> {
-    let request_url =  format!("https://{}.api.riotgames.com/lol/summoner/v4/summoners/by-name/{}?api_key={}", region, user_name, api_key);
-
+    let request_url = format!("https://{}.api.riotgames.com/lol/summoner/v4/summoners/by-name/{}?api_key={}", region, user_name, api_key);
     let res = api_fetcher::get_request(client, request_url).await?;
-
     let status_code = res.status();
-    
     let body = res.json::<HashMap<String, Value>>().await?;
     let result = body.get("puuid").and_then(Value::as_str);
 
@@ -25,6 +22,54 @@ pub async fn get_puuid(client: &api_fetcher::BoundedHttpFetcher, region: &str, u
              http_code: status_code.to_string().chars().take_while(|&ch| ch != ' ').collect::<String>()
         })
     }
+}
+
+pub async fn get_encrypted_summoner_id(client: &api_fetcher::BoundedHttpFetcher, region: &str, user_name: &str, api_key: &str) -> Result<String, models::LolApiError> {
+    let request_url = format!("https://{}.api.riotgames.com//lol/summoner/v4/summoners/by-name/{}?api_key={}", region, user_name, api_key);
+    let res = api_fetcher::get_request(client, request_url).await?;
+    let status_code = res.status();
+    let body = res.json::<HashMap<String, Value>>().await?;
+    let result = body.get("id").and_then(Value::as_str);
+
+    return match result {
+         Some(x) => Ok(x.to_string()),
+         None => Err(models::LolApiError {
+             description: format!("Unexpected no 'id' in response body. HTTP status code: {}", status_code),
+             http_code: status_code.to_string().chars().take_while(|&ch| ch != ' ').collect::<String>()
+        })
+    }
+}
+
+pub async fn get_solo_queue_ranking(
+    client: &api_fetcher::BoundedHttpFetcher,
+    region: &str,
+    encrypted_summoner_id: String,
+    api_key: &str) -> Result<Option<models::LeagueEntry>, models::LolApiError> {
+
+    let rankings = get_league_rankings(client, region, encrypted_summoner_id, api_key).await?;
+
+    return Ok(rankings.iter().find(|ranking| ranking.queueType == "RANKED_SOLO_5x5").cloned());
+}
+
+pub async fn get_league_rankings(
+    client: &api_fetcher::BoundedHttpFetcher,
+    region: &str,
+    encrypted_summoner_id: String,
+    api_key: &str) -> Result<Vec<models::LeagueEntry>, models::LolApiError> {
+
+    let request_url = format!("https://{}.api.riotgames.com/lol/league/v4/entries/by-summoner/{}?api_key={}", region, encrypted_summoner_id, api_key);
+    let res = api_fetcher::get_request(client, request_url).await?;
+    let status_code = res.status();
+
+    if !status_code.is_success() {
+        return Err(models::LolApiError {
+            description: format!("Unexpected HTTP response code. HTTP status code: {}", status_code),
+            http_code: status_code.to_string().chars().take_while(|&ch| ch != ' ').collect::<String>()
+       });
+    }
+
+    let result = res.json::<Vec<models::LeagueEntry>>().await?;
+    return Ok(result);
 }
 
 /**

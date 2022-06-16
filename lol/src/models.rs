@@ -43,11 +43,20 @@ pub struct UserGameSummary {
     pub game_duration_millis: u64
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct LeagueEntry {
+    pub tier: String,
+    pub rank: String,
+    pub leaguePoints: String,
+    pub queueType: String,
+    pub leagueId: String
+}
+
 impl std::convert::From<reqwest::Error> for LolApiError {
     fn from(error: reqwest::Error) -> Self {
 
         let result = LolApiError {
-            http_code: "Unknown".to_string(),
+            http_code: "500".to_string(),
             description: error.to_string()
         };
 

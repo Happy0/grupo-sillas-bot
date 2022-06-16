@@ -83,12 +83,6 @@ pub async fn handle_requests(mut receiver: Receiver<SendCommand>, per_second_lim
             }
         });
 
-        //let x = sender.send(result);
-
-        // if !x.is_ok() {
-        //     println!("Could not send result for {}", request_url);
-        // }
-
         if request_count < per_second_limit {
             request_count = request_count + 1;
         } else {
@@ -96,8 +90,6 @@ pub async fn handle_requests(mut receiver: Receiver<SendCommand>, per_second_lim
             sleep(Duration::from_secs(2)).await;
             request_count = 0;
         }
-
-
     }
 }
 
