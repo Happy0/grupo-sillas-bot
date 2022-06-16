@@ -25,7 +25,7 @@ pub async fn get_puuid(client: &api_fetcher::BoundedHttpFetcher, region: &str, u
 }
 
 pub async fn get_encrypted_summoner_id(client: &api_fetcher::BoundedHttpFetcher, region: &str, user_name: &str, api_key: &str) -> Result<String, models::LolApiError> {
-    let request_url = format!("https://{}.api.riotgames.com//lol/summoner/v4/summoners/by-name/{}?api_key={}", region, user_name, api_key);
+    let request_url = format!("https://{}.api.riotgames.com/lol/summoner/v4/summoners/by-name/{}?api_key={}", region, user_name, api_key);
     let res = api_fetcher::get_request(client, request_url).await?;
     let status_code = res.status();
     let body = res.json::<HashMap<String, Value>>().await?;
