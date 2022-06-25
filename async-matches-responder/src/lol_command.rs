@@ -89,8 +89,6 @@ async fn get_games_over_time(
     
     println!("Executing get_games_over_time");
 
-    let days = if days > 7 { 7 } else { days };
-
     let api_key: String = env::var("LOL_API_KEY").map_err(|err| discord_bot_types::BotError {
         statusCode: 500,
         body: "Missing LOL API key".to_string()

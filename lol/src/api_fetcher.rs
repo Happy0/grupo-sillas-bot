@@ -87,7 +87,7 @@ pub async fn handle_requests(mut receiver: Receiver<SendCommand>, per_second_lim
             request_count = request_count + 1;
         } else {
             println!("Sleeping!");
-            sleep(Duration::from_secs(2)).await;
+            sleep(Duration::from_secs(1)).await;
             request_count = 0;
         }
     }
