@@ -27,7 +27,7 @@ custom:
   capacities:
   - table: GrupoSillasBotTable  # DynamoDB Resource
     read:
-      minimum: 1        # Minimum read capacity
+      minimum: 5        # Minimum read capacity
       maximum: 10     # Maximum read capacity
       usage: 0.75       # Targeted usage percentage
     write:
@@ -81,5 +81,5 @@ resources:
           - AttributeName: sortKey
             KeyType: RANGE
         ProvisionedThroughput:
-          ReadCapacityUnits: 1
+          ReadCapacityUnits: 5
           WriteCapacityUnits: 1

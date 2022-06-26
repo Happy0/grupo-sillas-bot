@@ -700,7 +700,6 @@ version = "0.1.0"
 dependencies = [
  "aws-config 0.13.0",
  "aws-sdk-dynamodb",
- "chrono",
  "serde",
  "serde_json",
 ]
