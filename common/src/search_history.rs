@@ -12,9 +12,21 @@ pub struct SearchedDetails {
 pub async fn store_search(client: &Client, discord_user_id: &str, searched_for: &str) -> Result<SearchedDetails, Error> {
     let table = "grupoSillasBotTable";
 
-    // atomic increment update expression?
+    // todo: fill these in:
+
+    let key_map: HashMap<std::string::String, AttributeValue> = HashMap::new();
+    let attribute_map: HashMap<std::string::String, AttributeValue> = HashMap::new();
+
+    let request = client
+        .update_item()
+        .table_name(table)
+        .set_key(
+            Some(key_map)
+        )
+        .update_expression("SET visits = if_not_exists(times, :initial) + :num, last_search= :now")
+        .set_expression_attribute_values(Some(attribute_map));
     
-    panic!("aaaahhhhh!!!")
+    panic!("aaaahhhhh!!!");
 }
 
 pub async fn get_searches(client: &Client, discord_user_id: &str) -> Result<Vec<SearchedDetails>, Error> {
