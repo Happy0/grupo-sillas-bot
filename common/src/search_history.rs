@@ -1,6 +1,7 @@
 use aws_sdk_dynamodb::{Client, Error};
 use aws_sdk_dynamodb::model::{AttributeValue};
 use std::collections::HashMap;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct SearchedDetails {
     pub discord_id: String,
@@ -9,24 +10,39 @@ pub struct SearchedDetails {
     pub last_search: u64
 }
 
-pub async fn store_search(client: &Client, discord_user_id: &str, searched_for: &str) -> Result<SearchedDetails, Error> {
+pub async fn store_search(client: &Client, discord_user_id: &str, searched_for: &str) -> Result<(), Error> {
     let table = "grupoSillasBotTable";
 
-    // todo: fill these in:
+    let start = SystemTime::now();
+    let since_the_epoch = start
+        .duration_since(UNIX_EPOCH)
+        // TODO: remove panic
+        .expect("Time went backwards");
 
-    let key_map: HashMap<std::string::String, AttributeValue> = HashMap::new();
-    let attribute_map: HashMap<std::string::String, AttributeValue> = HashMap::new();
+    let seconds_since_epoch = since_the_epoch.as_secs();
 
-    let request = client
+    let mut key_map: HashMap<std::string::String, AttributeValue> = HashMap::new();
+    key_map.insert("partitionKey".to_string(), AttributeValue::S(discord_user_id.to_string()));
+    key_map.insert("sortKey".to_string(), AttributeValue::S(searched_for.to_string()));
+
+    let mut attribute_map: HashMap<std::string::String, AttributeValue> = HashMap::new();
+    attribute_map.insert(":initial".to_string(), AttributeValue::N("1".to_string()));
+    attribute_map.insert(":num".to_string(), AttributeValue::N("1".to_string()));
+    attribute_map.insert(":last_search".to_string(), AttributeValue::N(seconds_since_epoch.to_string()));
+
+    client
         .update_item()
         .table_name(table)
         .set_key(
             Some(key_map)
         )
         .update_expression("SET visits = if_not_exists(times, :initial) + :num, last_search= :now")
-        .set_expression_attribute_values(Some(attribute_map));
-    
-    panic!("aaaahhhhh!!!");
+        .set_expression_attribute_values(Some(attribute_map))
+        .send()
+        .await?;
+   
+    // TODO use UpdateItemOutput to return the new value for the row?
+    return Ok(());
 }
 
 pub async fn get_searches(client: &Client, discord_user_id: &str) -> Result<Vec<SearchedDetails>, Error> {
