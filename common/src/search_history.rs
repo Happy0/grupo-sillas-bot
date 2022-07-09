@@ -67,7 +67,11 @@ pub async fn get_searches(client: &Client, discord_user_id: &str) -> Result<Vec<
             return Ok(Vec::new());
         },
         Some(results) => {
-            let result: Vec<SearchedDetails> = results.into_iter().map(|x| get_searched_details(&x)).flatten().collect();
+            let result: Vec<SearchedDetails> = results
+                .into_iter()
+                .map(|x| get_searched_details(&x))
+                .flatten()
+                .collect();
             return Ok(result);
         }
     }

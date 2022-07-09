@@ -21,6 +21,8 @@ dependencies = [
 name = "async-matches-responder"
 version = "0.1.0"
 dependencies = [
+ "aws-config 0.13.0",
+ "aws-sdk-dynamodb",
  "common",
  "hyper",
  "lambda_runtime",

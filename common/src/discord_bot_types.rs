@@ -46,7 +46,8 @@ pub struct DiscordReceivedCommand {
     pub typeField: u64,
     pub token: String,
     pub application_id: String,
-    pub data: Option<Command>
+    pub data: Option<Command>,
+    pub member: Member
 }
 
 #[derive(Serialize, Deserialize)]
@@ -80,9 +81,21 @@ pub struct Command {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct Member {
+    pub user: User
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct User {
+    pub id: String,
+    pub username: String
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct PlayedCommand {
     pub token: String,
     pub application_id: String,
+    pub discord_user_id: String,
     pub player_name: String,
     pub days: u64,
     pub game_type: Option<String>
