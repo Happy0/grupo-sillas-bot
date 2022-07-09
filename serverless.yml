@@ -17,12 +17,23 @@ provider:
         - Fn::GetAtt: [LolMatchesQueue, Arn]
 plugins:
   - serverless-rust
+  - serverless-dynamodb-autoscaling
 package:
   individually: true
 
 custom:
   rust:
     dockerless: true
+  capacities:
+  - table: GrupoSillasBotTable  # DynamoDB Resource
+    read:
+      minimum: 5        # Minimum read capacity
+      maximum: 10     # Maximum read capacity
+      usage: 0.75       # Targeted usage percentage
+    write:
+      minimum: 1       # Minimum write capacity
+      maximum: 10      # Maximum write capacity
+      usage: 0.5        # Targeted usage percentage
 
 functions:
   interactionHandler:
@@ -31,6 +42,7 @@ functions:
       DISCORD_BOT_PUBLIC_KEY: ${env:DISCORD_PUBLIC_KEY}
       LOL_API_KEY: ${env:LOL_API_KEY}
       MATCHES_QUEUE_URL: { Ref: LolMatchesQueue }
+      DYNAMO_TABLE_NAME: GrupoSillasBotTable
     events:
       - httpApi: 'POST /interaction'
   asyncMatchesResponderHandler:
@@ -39,6 +51,7 @@ functions:
     environment:
       DISCORD_BOT_PUBLIC_KEY: ${env:DISCORD_PUBLIC_KEY}
       LOL_API_KEY: ${env:LOL_API_KEY}
+      DYNAMO_TABLE_NAME: GrupoSillasBotTable
     events:
       - sqs:
           arn:
@@ -54,3 +67,20 @@ resources:
         QueueName: sqs-matches-commands-queue.fifo
         FifoQueue: true
         VisibilityTimeout: 60
+    GrupoSillasBotTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: grupoSillasBotTable
+        AttributeDefinitions:
+          - AttributeName: partitionKey
+            AttributeType: S
+          - AttributeName: sortKey
+            AttributeType: S
+        KeySchema:
+          - AttributeName: partitionKey
+            KeyType: HASH
+          - AttributeName: sortKey
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 1

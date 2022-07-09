@@ -12,4 +12,6 @@ lol = { path = "../lol" }
 common = { path = "../common" }
 reqwest = { version = "0.11.10", features = ["json", "rustls-tls"] }
 hyper = "0.14"
-openssl = { version = "0.10", features = ["vendored"] }
+aws-config = "0.13.0"
+aws-sdk-dynamodb = "0.13.0"
+#penssl = { version = "0.10", features = ["vendored"] }

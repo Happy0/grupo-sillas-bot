@@ -1,10 +1,12 @@
 use lol;
 use common::discord_bot_types;
 use serde::{Deserialize, Serialize};
+use aws_sdk_dynamodb;
 
 pub struct Toolbox {
     pub lol_api_fetcher: lol::api_fetcher::BoundedHttpFetcher,
-    pub discord_http_client: reqwest::Client
+    pub discord_http_client: reqwest::Client,
+    pub dynamo_client: aws_sdk_dynamodb::Client
 }
 
 #[derive(Serialize, Deserialize, Debug)]

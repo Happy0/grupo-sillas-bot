@@ -1,6 +1,10 @@
 use crate::discord_bot_types;
 
-pub fn build_played_command(command: discord_bot_types::Command, token: String, application_id: String) -> Result<discord_bot_types::PlayedCommand, discord_bot_types::BotError> {
+pub fn build_played_command(
+    command: discord_bot_types::Command,
+    discord_user_id: String,
+    token: String,
+    application_id: String) -> Result<discord_bot_types::PlayedCommand, discord_bot_types::BotError> {
     let player_name = command.options.iter().find_map(|x| match x {
         discord_bot_types::CommandOption::NumberCommandOption(x) => None,
         discord_bot_types::CommandOption::StringCommandOption(option) => {
@@ -24,6 +28,7 @@ pub fn build_played_command(command: discord_bot_types::Command, token: String, 
     return Ok(discord_bot_types::PlayedCommand {
         player_name: player_name.to_string(),
         days: days_requested,
+        discord_user_id: discord_user_id,
         game_type: game_type,
         token: token,
         application_id: application_id
