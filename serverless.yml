@@ -66,6 +66,7 @@ resources:
       Properties:
         QueueName: sqs-matches-commands-queue.fifo
         FifoQueue: true
+        VisibilityTimeout: 60
     GrupoSillasBotTable:
       Type: AWS::DynamoDB::Table
       Properties:
