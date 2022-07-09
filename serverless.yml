@@ -53,3 +53,4 @@ resources:
       Properties:
         QueueName: sqs-matches-commands-queue.fifo
         FifoQueue: true
+        VisibilityTimeout: 60
