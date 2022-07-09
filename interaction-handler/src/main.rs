@@ -63,7 +63,7 @@ async fn process_request(sqs_client: &Client, event: LambdaEvent<Value>) -> Resu
         1 => {return Ok(make_ping_response())},
         2 => {
             let command = payload_value.data.ok_or(make_validation_error_response("Command missing 'data' field.".to_string()))?;
-            let played_command = lol_command::build_played_command(command, payload_value.token, payload_value.member.user.id, payload_value.application_id);
+            let played_command = lol_command::build_played_command(command, payload_value.member.user.id, payload_value.token, payload_value.application_id);
 
             match played_command {
                 Err(x) => {
