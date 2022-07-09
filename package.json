@@ -1,5 +1,6 @@
 {
   "devDependencies": {
+    "serverless-dynamodb-autoscaling": "^0.6.2",
     "serverless-rust": "^0.3.8"
   }
 }
