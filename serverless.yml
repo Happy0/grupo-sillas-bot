@@ -20,7 +20,7 @@ provider:
         - 'dynamodb:Query'
         - 'dynamodb:UpdateItem'
         - 'dynamodb:PutItem'
-    - Resource:
+      Resource:
         - Fn::GetAtt: [GrupoSillasBotTable, Arn]
 plugins:
   - serverless-rust
