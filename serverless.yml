@@ -15,13 +15,13 @@ provider:
         - 'sqs:SendMessage'
       Resource:
         - Fn::GetAtt: [LolMatchesQueue, Arn]
-    # - Effect: Allow
-    #   Action:
-    #     - 'dynamodb:Query'
-    #     - 'dynamodb:UpdateItem'
-    #     - 'dynamodb:PutItem'
-    # - Resource:
-    #     - Fn::GetAtt: [GrupoSillasBotTable, Arn]
+    - Effect: Allow
+      Action:
+        - 'dynamodb:Query'
+        - 'dynamodb:UpdateItem'
+        - 'dynamodb:PutItem'
+    - Resource:
+        - Fn::GetAtt: [GrupoSillasBotTable, Arn]
 plugins:
   - serverless-rust
   - serverless-dynamodb-autoscaling
