@@ -26,6 +26,11 @@ pub struct Body {
     pub data: Option<Data>
 }
 
+pub struct StringChoice {
+    name: String,
+    value: String
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct BotResponse {
     pub headers: Headers,
@@ -53,9 +58,12 @@ pub struct DiscordReceivedCommand {
 #[derive(Serialize, Deserialize)]
 pub struct StringCommandOption {
     #[serde(rename(serialize = "type", deserialize = "type"))]
-    typeField: u64,
+    pub typeField: u64,
     pub name: String,
-    pub value: String 
+    pub value: String,
+    
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub focused: Option<bool>
 }
 
 #[derive(Serialize, Deserialize)]
@@ -63,7 +71,10 @@ pub struct NumberCommandOption {
     #[serde(rename(serialize = "type", deserialize = "type"))]
     typeField: u64,
     pub name: String,
-    pub value: u64 
+    pub value: u64,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub focused: Option<bool>
 }
 
 #[derive(Serialize, Deserialize)]

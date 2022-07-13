@@ -2,9 +2,11 @@ use common::discord_bot_types;
 use lambda_runtime::{service_fn, LambdaEvent, Error};
 use serde_json::{Value, json};
 use aws_sdk_sqs::Client;
+use aws_sdk_dynamodb;
 use aws_config::meta::region::RegionProviderChain;
 use std::env;
 use chrono;
+use common;
 
 mod auth;
 mod lol_command;
@@ -76,8 +78,42 @@ async fn process_request(sqs_client: &Client, event: LambdaEvent<Value>) -> Resu
             }
 
         },
+        4 => {
+            panic!("dsfsdf");
+        }
         _ => {
             return Err(make_error_response(400, "Unrecognised command type")); 
+        }
+    };
+}
+
+async fn generate_username_autocomplete_suggestions(
+    dynamo_client: &aws_sdk_dynamodb::Client,
+    discord_user_id: &str,
+    input: Vec<discord_bot_types::CommandOption>) -> Vec<discord_bot_types::StringCommandOption> {
+    let name_field = input.into_iter().find_map(|x| match x {
+        discord_bot_types::CommandOption::StringCommandOption(y) if y.name == "user" && y.focused == Some(true) => Some(y.value),
+        _ => None
+    });
+
+    match name_field {
+        None => return Vec::new(),
+        Some(name_prefix) => {
+            let searches = common::search_history::get_searches(dynamo_client, discord_user_id).await;
+
+            match searches {
+                Err(_) => {
+                    return Vec::new()
+                },
+                Ok(res) => {
+                    return res.into_iter().filter(|item| item.searched_name.starts_with(&name_prefix)).map(|item| discord_bot_types::StringCommandOption {
+                        typeField: 3,
+                        name: "user".to_string(),
+                        value: item.searched_name,
+                        focused: Some(true)
+                    }).collect();
+                }
+            }
         }
     };
 }
