@@ -52,7 +52,7 @@ pub struct DiscordReceivedCommand {
     pub token: String,
     pub application_id: String,
     pub data: Option<Command>,
-    pub member: Member
+    pub member: Option<Member>
 }
 
 #[derive(Serialize, Deserialize)]
