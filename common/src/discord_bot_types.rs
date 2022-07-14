@@ -14,8 +14,10 @@ pub struct Headers {
 
 #[derive(Serialize, Deserialize)]
 pub struct Data {
-    pub tts: bool,
-    pub content: String
+    // This is maybe a bit hacky. Could use a generic for 'data' field instead?
+    pub tts: Option<bool>,
+    pub content: Option<String>,
+    pub choices: Option<Vec<StringChoice>>
 }
 
 #[derive(Serialize, Deserialize)]
@@ -24,6 +26,12 @@ pub struct Body {
     pub typeField: u64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<Data>
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct StringChoice {
+    pub name: String,
+    pub value: String
 }
 
 #[derive(Serialize, Deserialize)]
@@ -47,15 +55,18 @@ pub struct DiscordReceivedCommand {
     pub token: String,
     pub application_id: String,
     pub data: Option<Command>,
-    pub member: Member
+    pub member: Option<Member>
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct StringCommandOption {
     #[serde(rename(serialize = "type", deserialize = "type"))]
-    typeField: u64,
+    pub typeField: u64,
     pub name: String,
-    pub value: String 
+    pub value: String,
+    
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub focused: Option<bool>
 }
 
 #[derive(Serialize, Deserialize)]
@@ -63,7 +74,10 @@ pub struct NumberCommandOption {
     #[serde(rename(serialize = "type", deserialize = "type"))]
     typeField: u64,
     pub name: String,
-    pub value: u64 
+    pub value: u64,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub focused: Option<bool>
 }
 
 #[derive(Serialize, Deserialize)]

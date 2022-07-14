@@ -2,9 +2,11 @@ use common::discord_bot_types;
 use lambda_runtime::{service_fn, LambdaEvent, Error};
 use serde_json::{Value, json};
 use aws_sdk_sqs::Client;
+use aws_sdk_dynamodb;
 use aws_config::meta::region::RegionProviderChain;
 use std::env;
 use chrono;
+use common;
 
 mod auth;
 mod lol_command;
@@ -14,14 +16,15 @@ async fn main() -> Result<(), Error> {
     let region_provider = RegionProviderChain::default_provider().or_else("eu-west-1");
     let config = aws_config::from_env().region(region_provider).load().await;
     let client = Client::new(&config);
+    let dynamo_client = aws_sdk_dynamodb::Client::new(&config);
 
-    let func = service_fn(|x| func(&client, x));
+    let func = service_fn(|x| func(&client, &dynamo_client, x));
     lambda_runtime::run(func).await?;
     Ok(())
 }
 
-async fn func(sqs_client: &Client, event: LambdaEvent<Value>) -> Result<Value, serde_json::Error> {
-    let result = process_request(sqs_client, event).await;
+async fn func(sqs_client: &Client, dynamo_client: &aws_sdk_dynamodb::Client, event: LambdaEvent<Value>) -> Result<Value, serde_json::Error> {
+    let result = process_request(sqs_client, dynamo_client, event).await;
 
     // AWS Lambda expects the returned 'body' field to be a JSON string, so we convert the bot response to a JSON string
     // and return it with the response headers and HTTP status code
@@ -46,7 +49,7 @@ async fn func(sqs_client: &Client, event: LambdaEvent<Value>) -> Result<Value, s
     return send;
 }
 
-async fn process_request(sqs_client: &Client, event: LambdaEvent<Value>) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
+async fn process_request(sqs_client: &Client, dynamo_client: &aws_sdk_dynamodb::Client, event: LambdaEvent<Value>) -> Result<discord_bot_types::BotResponse, discord_bot_types::BotError> {
     let (event, _context) = event.into_parts();
     auth::verify_request(&event).then(|| true).ok_or(discord_bot_types::BotError{statusCode: 401, body: "invalid request signature".to_string()})?;
 
@@ -63,7 +66,9 @@ async fn process_request(sqs_client: &Client, event: LambdaEvent<Value>) -> Resu
         1 => {return Ok(make_ping_response())},
         2 => {
             let command = payload_value.data.ok_or(make_validation_error_response("Command missing 'data' field.".to_string()))?;
-            let played_command = lol_command::build_played_command(command, payload_value.member.user.id, payload_value.token, payload_value.application_id);
+            let member = payload_value.member.ok_or(make_validation_error_response("Command missing 'member' field.".to_string()))?;
+
+            let played_command = lol_command::build_played_command(command, member.user.id, payload_value.token, payload_value.application_id);
 
             match played_command {
                 Err(x) => {
@@ -76,8 +81,72 @@ async fn process_request(sqs_client: &Client, event: LambdaEvent<Value>) -> Resu
             }
 
         },
+        4 => {
+            println!("It's an autocomplete command!");
+            let command = payload_value.data.ok_or(make_validation_error_response("Command missing 'data' field.".to_string()))?;
+            let options = command.options;
+            let discord_user_id = payload_value.member.map(|member| member.user.id);
+
+            let suggestions = match discord_user_id {
+                None => Vec::new(),
+                Some(user_id) => {
+                        generate_username_autocomplete_suggestions(dynamo_client, &user_id, options).await
+                }
+            };
+
+            println!("Suggestions: {:?}", suggestions);
+
+            return Ok(discord_bot_types::BotResponse {
+                headers: discord_bot_types::Headers {
+                    contentType: "application/json".to_string()
+                },
+                statusCode: 200,
+                body: discord_bot_types::Body {
+                    typeField: 8,
+                    data: Some(
+                        discord_bot_types::Data {
+                            tts: None,
+                            content: None,
+                            choices: Some(suggestions)
+                        }
+                    )
+                }
+            });
+        }
         _ => {
             return Err(make_error_response(400, "Unrecognised command type")); 
+        }
+    };
+}
+
+async fn generate_username_autocomplete_suggestions(
+    dynamo_client: &aws_sdk_dynamodb::Client,
+    discord_user_id: &str,
+    input: Vec<discord_bot_types::CommandOption>) -> Vec<discord_bot_types::StringChoice> {
+    let name_field = input.into_iter().find_map(|x| match x {
+        discord_bot_types::CommandOption::StringCommandOption(y) if y.name == "user" && y.focused == Some(true) => Some(y.value),
+        _ => None
+    });
+
+    match name_field {
+        None => return Vec::new(),
+        Some(name_prefix) => {
+            let searches = common::search_history::get_searches(dynamo_client, discord_user_id).await;
+
+            match searches {
+                Err(_) => {
+                    return Vec::new()
+                },
+                Ok(res) => {
+                    println!("Search history result: {:?}", res);
+
+                    return res.into_iter().filter(|item| name_prefix.is_empty() || item.searched_name.starts_with(&name_prefix))
+                        .map(|item| discord_bot_types::StringChoice {
+                            name: "user".to_string(),
+                            value: item.searched_name
+                        }).collect();
+                }
+            }
         }
     };
 }

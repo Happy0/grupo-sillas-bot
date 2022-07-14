@@ -81,7 +81,6 @@ async fn handle_played_command(
 
     if result.is_ok() {
         let user_count_future = update_user_count(dynamo_client, &command.discord_user_id, &command.player_name);
-
         let (x, dynamo_result) = tokio::join!(response_future, user_count_future);
 
         println!("Dynamo update result: {:?}", dynamo_result);
