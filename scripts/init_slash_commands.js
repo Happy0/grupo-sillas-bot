@@ -20,7 +20,8 @@ const commands = [
         "name": "user",
         "description": "The league of legends username for the user.",
         "required": true,
-        "type": 3
+        "type": 3,
+        "autocomplete": true
     },{
         "name": "days",
         "description": "Over the last how many days.",
@@ -37,7 +38,8 @@ const commands = [
         "name": "user",
         "description": "The league of legends username for the user.",
         "required": true,
-        "type": 3
+        "type": 3,
+        "autocomplete": true
     },{
       "name": "days",
       "description": "Over the last how many days.",

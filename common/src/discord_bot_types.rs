@@ -28,7 +28,7 @@ pub struct Body {
     pub data: Option<Data>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct StringChoice {
     pub name: String,
     pub value: String

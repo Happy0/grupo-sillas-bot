@@ -82,6 +82,7 @@ async fn process_request(sqs_client: &Client, dynamo_client: &aws_sdk_dynamodb::
 
         },
         4 => {
+            println!("It's an autocomplete command!");
             let command = payload_value.data.ok_or(make_validation_error_response("Command missing 'data' field.".to_string()))?;
             let options = command.options;
             let discord_user_id = payload_value.member.map(|member| member.user.id);
@@ -92,6 +93,8 @@ async fn process_request(sqs_client: &Client, dynamo_client: &aws_sdk_dynamodb::
                         generate_username_autocomplete_suggestions(dynamo_client, &user_id, options).await
                 }
             };
+
+            println!("Suggestions: {:?}", suggestions);
 
             return Ok(discord_bot_types::BotResponse {
                 headers: discord_bot_types::Headers {
@@ -135,6 +138,8 @@ async fn generate_username_autocomplete_suggestions(
                     return Vec::new()
                 },
                 Ok(res) => {
+                    println!("Search history result: {:?}", res);
+
                     return res.into_iter().filter(|item| name_prefix.is_empty() || item.searched_name.starts_with(&name_prefix))
                         .map(|item| discord_bot_types::StringChoice {
                             name: "user".to_string(),
