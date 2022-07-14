@@ -7,6 +7,7 @@ use aws_config::meta::region::RegionProviderChain;
 use std::env;
 use chrono;
 use common;
+use std::cmp::Ordering::{Less, Equal, Greater};
 
 mod auth;
 mod lol_command;
@@ -139,14 +140,18 @@ async fn generate_username_autocomplete_suggestions(
                 },
                 Ok(res) => {
                     println!("Search history result: {:?}", res);
-
-                    return res.into_iter().filter(|item| name_prefix.is_empty() || item.searched_name.starts_with(&name_prefix))
+                    let mut results = res.into_iter().filter(|item| name_prefix.is_empty() || item.searched_name.starts_with(&name_prefix))
+                        .collect::<Vec<common::search_history::SearchedDetails>>();
+                    
+                    // TODO: how to return a new vector rather than doing it in place?
+                    results.sort_by(|a, b| b.last_search.cmp(&a.last_search));
+                    
+                    return results
+                        .into_iter()
                         .map(|item| {
-                            let name = item.searched_name.clone();
-                            let name_value = item.searched_name.clone();
                             discord_bot_types::StringChoice {
-                                name: name,
-                                value: name_value
+                                name: item.searched_name.clone(),
+                                value: item.searched_name.clone()
                             }
                         })
                         .take(25)
