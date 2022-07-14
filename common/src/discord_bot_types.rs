@@ -14,8 +14,10 @@ pub struct Headers {
 
 #[derive(Serialize, Deserialize)]
 pub struct Data {
-    pub tts: bool,
-    pub content: String
+    // This is maybe a bit hacky. Could use a generic for 'data' field instead?
+    pub tts: Option<bool>,
+    pub content: Option<String>,
+    pub choices: Option<Vec<StringChoice>>
 }
 
 #[derive(Serialize, Deserialize)]
@@ -26,9 +28,10 @@ pub struct Body {
     pub data: Option<Data>
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct StringChoice {
-    name: String,
-    value: String
+    pub name: String,
+    pub value: String
 }
 
 #[derive(Serialize, Deserialize)]

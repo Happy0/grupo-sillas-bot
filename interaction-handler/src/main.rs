@@ -93,10 +93,22 @@ async fn process_request(sqs_client: &Client, dynamo_client: &aws_sdk_dynamodb::
                 }
             };
 
-            
-            
-
-            panic!("dsfsdf");
+            return Ok(discord_bot_types::BotResponse {
+                headers: discord_bot_types::Headers {
+                    contentType: "application/json".to_string()
+                },
+                statusCode: 200,
+                body: discord_bot_types::Body {
+                    typeField: 8,
+                    data: Some(
+                        discord_bot_types::Data {
+                            tts: None,
+                            content: None,
+                            choices: Some(suggestions)
+                        }
+                    )
+                }
+            });
         }
         _ => {
             return Err(make_error_response(400, "Unrecognised command type")); 
@@ -107,7 +119,7 @@ async fn process_request(sqs_client: &Client, dynamo_client: &aws_sdk_dynamodb::
 async fn generate_username_autocomplete_suggestions(
     dynamo_client: &aws_sdk_dynamodb::Client,
     discord_user_id: &str,
-    input: Vec<discord_bot_types::CommandOption>) -> Vec<discord_bot_types::StringCommandOption> {
+    input: Vec<discord_bot_types::CommandOption>) -> Vec<discord_bot_types::StringChoice> {
     let name_field = input.into_iter().find_map(|x| match x {
         discord_bot_types::CommandOption::StringCommandOption(y) if y.name == "user" && y.focused == Some(true) => Some(y.value),
         _ => None
@@ -124,11 +136,9 @@ async fn generate_username_autocomplete_suggestions(
                 },
                 Ok(res) => {
                     return res.into_iter().filter(|item| name_prefix.is_empty() || item.searched_name.starts_with(&name_prefix))
-                        .map(|item| discord_bot_types::StringCommandOption {
-                            typeField: 3,
+                        .map(|item| discord_bot_types::StringChoice {
                             name: "user".to_string(),
-                            value: item.searched_name,
-                            focused: Some(true)
+                            value: item.searched_name
                         }).collect();
                 }
             }
