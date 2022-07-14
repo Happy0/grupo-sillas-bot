@@ -142,7 +142,7 @@ async fn generate_username_autocomplete_suggestions(
 
                     return res.into_iter().filter(|item| name_prefix.is_empty() || item.searched_name.starts_with(&name_prefix))
                         .map(|item| discord_bot_types::StringChoice {
-                            name: "user".to_string(),
+                            name: item.searched_name,
                             value: item.searched_name
                         }).collect();
                 }
