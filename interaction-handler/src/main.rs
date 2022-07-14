@@ -141,10 +141,16 @@ async fn generate_username_autocomplete_suggestions(
                     println!("Search history result: {:?}", res);
 
                     return res.into_iter().filter(|item| name_prefix.is_empty() || item.searched_name.starts_with(&name_prefix))
-                        .map(|item| discord_bot_types::StringChoice {
-                            name: item.searched_name,
-                            value: item.searched_name
-                        }).collect();
+                        .map(|item| {
+                            let name = item.searched_name.clone();
+                            let name_value = item.searched_name.clone();
+                            discord_bot_types::StringChoice {
+                                name: name,
+                                value: name_value
+                            }
+                        })
+                        .take(25)
+                        .collect();
                 }
             }
         }
