@@ -10,7 +10,7 @@ mod lol_command;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let region_provider = RegionProviderChain::default_provider().or_else("eu-west-1");
+    let region_provider = RegionProviderChain::default_provider().or_else("us-east-1");
     let config = aws_config::from_env().region(region_provider).load().await;
     let dynamo_client = Client::new(&config);
 
